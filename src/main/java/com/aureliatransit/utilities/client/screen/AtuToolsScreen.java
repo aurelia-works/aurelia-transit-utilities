@@ -25,6 +25,9 @@ public final class AtuToolsScreen extends Screen {
 		final ButtonWidget presets = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.presets"), button -> client.setScreen(new TrainPresetScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
 		presets.active = MtrBridge.canEdit();
 		y += 24;
+		final ButtonWidget stops = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.stops"), button -> client.setScreen(new RouteStopsScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
+		stops.active = MtrBridge.canEdit();
+		y += 24;
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions(x, height - 28, BUTTON_WIDTH, 20).build());
 	}
 

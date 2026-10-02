@@ -15,3 +15,10 @@ Test world: `run/` is git-ignored. `ATU Test` is a copy of ATA's `run/client/sav
 4. A preset that is longer than the siding rail is greyed and refused with the lengths. A preset using vehicles from a resource pack that is no longer loaded is refused with the missing ids. Presets of other transport modes are not listed.
 5. Presets live in `config/aurelia_transit_utilities/train_presets.json`. A corrupt file is moved to `train_presets.json.bad` and the screen says so.
 6. In adventure or spectator mode the Apply button stays disabled (MTR's own permission rule).
+
+### Route stop order (U3)
+1. Dashboard → **ATU** → **Route stop order**. Pick a route; its stops show in order with station, platform and custom destination.
+2. Drag a stop: a green line shows where it lands. Or select a stop and use **Move up / Move down** (or Shift+Up/Down). **Reverse** flips the whole route, **Revert** drops the edits.
+3. **Save order** writes the route. Reopen it in MTR's own route editor: same order, custom destinations still on the same stops.
+4. **Regenerate depots** sends MTR's depot Generate for every depot that runs the route. Trains only follow a new order after that (same as editing in MTR).
+5. Switching to another route with unsaved edits drops them and says so. If the route's stop count changed elsewhere in the meantime, Save refuses and reloads it.
