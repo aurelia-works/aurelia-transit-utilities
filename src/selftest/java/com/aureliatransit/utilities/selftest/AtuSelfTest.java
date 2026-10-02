@@ -1,6 +1,7 @@
 package com.aureliatransit.utilities.selftest;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.ScreenshotRecorder;
@@ -43,6 +44,7 @@ public final class AtuSelfTest implements ClientModInitializer {
 		RouteStopsSelfTest.addSteps(this);
 		DwellSelfTest.addSteps(this);
 		OverlapSelfTest.addSteps(this);
+		ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 	}
 

@@ -15,9 +15,16 @@ public record Box(long minX, long minY, long minZ, long maxX, long maxY, long ma
 		return minX > maxX || minY > maxY || minZ > maxZ;
 	}
 
-	/** Number of blocks; saturates instead of overflowing for world-height zones. */
+	/**
+	 * Number of blocks, in double: MTR draws zones with Y from {@code Long.MIN_VALUE} to {@code Long.MAX_VALUE}, where
+	 * {@code maxY - minY + 1} would overflow a long.
+	 */
 	public double volume() {
-		return isEmpty() ? 0 : (double) (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
+		return isEmpty() ? 0 : span(minX, maxX) * span(minY, maxY) * span(minZ, maxZ);
+	}
+
+	private static double span(long min, long max) {
+		return (double) max - (double) min + 1;
 	}
 
 	/** Which face a shrink moves, as seen on the map: west = -X, east = +X, north = -Z, south = +Z. */

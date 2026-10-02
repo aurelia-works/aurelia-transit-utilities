@@ -126,4 +126,20 @@ class OverlapTest {
 		final Zones zones = new Zones(List.of(station(1, 0, 0, 20, 20), station(2, 10, 0, 30, 20), station(3, 100, 0, 110, 10)), List.of(platform(100, 15, 0, 10)));
 		assertThrows(IllegalArgumentException.class, () -> OverlapResolver.plan(zones, zones.conflicts().get(0), 3));
 	}
+
+	@Test
+	void unboundedHeightZonesLikeMtrDrawsThem() {
+		// MTR's dashboard draws zones from Long.MIN_VALUE to Long.MAX_VALUE in Y.
+		final Box unbounded = new Box(0, Long.MIN_VALUE, 0, 20, Long.MAX_VALUE, 20);
+		assertTrue(unbounded.volume() > 1e20, "volume must not overflow");
+		assertTrue(unbounded.contains(new Point(5, -2000, 5)));
+		final Zones zones = new Zones(
+				List.of(new Zones.Station(1, unbounded), new Zones.Station(2, new Box(10, Long.MIN_VALUE, 0, 30, Long.MAX_VALUE, 20))),
+				List.of(platform(100, 15, 0, 10), platform(101, 5, 0, 10))
+		);
+		final OverlapResolver.Plan plan = OverlapResolver.plan(zones, zones.conflicts().get(0), 2);
+		assertTrue(plan.reachesGoal());
+		assertTrue(plan.sideEffects().isEmpty());
+		assertEquals(Box.Side.EAST, plan.cuts().get(0).side());
+	}
 }
