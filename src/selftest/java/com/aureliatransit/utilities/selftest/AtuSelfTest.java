@@ -46,6 +46,7 @@ public final class AtuSelfTest implements ClientModInitializer {
 		OverlapSelfTest.addSteps(this);
 		ZoneHeightSelfTest.addSteps(this);
 		DepotHealthSelfTest.addSteps(this);
+		StationCodesSelfTest.addSteps(this);
 		ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 	}

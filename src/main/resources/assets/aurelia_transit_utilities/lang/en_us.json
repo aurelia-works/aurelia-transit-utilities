@@ -110,5 +110,19 @@
 	"gui.aurelia_transit_utilities.depots.problem.no_routes": "Has no routes assigned.",
 	"gui.aurelia_transit_utilities.depots.problem.sidings_without_train": "%s of %s siding(s) have no train selected.",
 	"gui.aurelia_transit_utilities.depots.problem.route_too_short": "Route %s has fewer than two stops.",
-	"gui.aurelia_transit_utilities.depots.problem.route_deleted_platform": "Route %s uses a platform that no longer exists."
+	"gui.aurelia_transit_utilities.depots.problem.route_deleted_platform": "Route %s uses a platform that no longer exists.",
+	"gui.aurelia_transit_utilities.tools.codes": "Station codes",
+	"gui.aurelia_transit_utilities.codes.title": "Station codes",
+	"gui.aurelia_transit_utilities.codes.pick": "Pick a route: its stations get numbered in route order.",
+	"gui.aurelia_transit_utilities.codes.prefix": "Prefix",
+	"gui.aurelia_transit_utilities.codes.start": "Start",
+	"gui.aurelia_transit_utilities.codes.step": "Step",
+	"gui.aurelia_transit_utilities.codes.digits": "Digits",
+	"gui.aurelia_transit_utilities.codes.bad_prefix": "Prefix: 1 to 4 letters, like JY.",
+	"gui.aurelia_transit_utilities.codes.bad_numbers": "Start and step are whole numbers (step not 0); digits 1 to 4.",
+	"gui.aurelia_transit_utilities.codes.out_of_range": "Numbers would go below 0 or above 9999.",
+	"gui.aurelia_transit_utilities.codes.apply": "Apply codes",
+	"gui.aurelia_transit_utilities.codes.remove": "Remove this prefix",
+	"gui.aurelia_transit_utilities.codes.applied": "Renamed %s station(s).",
+	"gui.aurelia_transit_utilities.codes.removed": "Removed codes from %s station(s)."
 }

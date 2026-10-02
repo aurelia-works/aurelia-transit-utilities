@@ -50,3 +50,9 @@
 - Note: an `MtrBridge` edit the tool reported as rejected had in fact been written; kept (it is the depot reader the owner then asked to finish) and told the owner.
 - Depot health: MTR sends `lastGeneratedStatus`, failed start/end platform and failed siding count to the client (`DepotSchema.serializeData`). Pure `depot/DepotHealth` (status + setup checks, worst-first order), 6 unit tests (41 total). `DepotHealthScreen` + Regenerate one / all with errors / Refresh.
 - Self-test 39/39 PASS: emptied the siding's train → reported "1 of 1 siding(s) have no train"; pressed Regenerate → MTR's `lastGeneratedMillis` was 1.3 s old, status SUCCESSFUL (first live proof the Regenerate button works); train restored.
+
+## 2026-10-02 — station codes
+
+- Pure `codes/StationCodes` (code pattern, numbering with start/step/padding and range check, add/replace by prefix, remove by prefix or all, never removes a name that is only a code). 4 unit tests (45 total).
+- `StationCodesScreen`: route → unique stations in route order → preview → Apply (`setName` + one `addStation` request) / Remove this prefix.
+- Self-test 42/42 PASS: route numbered `[Москва Курская|AT01, 東京駅|AT02, Alpha|AT03]` confirmed from MTR core; MTR's own dashboard screenshot shows "Alpha AT03"; removal restored the exact original names.

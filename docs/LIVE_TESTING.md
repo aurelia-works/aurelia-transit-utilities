@@ -45,3 +45,8 @@ Test world: `run/` is git-ignored. `ATU Test` is a copy of ATA's `run/client/sav
 1. Dashboard → **ATU** → **Depot health**. Every depot, worst first: ✖ red = errors, ! orange = warnings, ✔ green = fine.
 2. Pick one: MTR's last generation result in words ("No path found between platform 2 (Central) and platform 1 (Harbour)…") plus setup mistakes (no routes, no sidings, sidings without a train, routes with under two stops or deleted platforms).
 3. **Regenerate this depot** / **Regenerate all with ✖** send MTR's own Generate; press **Refresh** after a moment for the new result. The screen never polls.
+
+### Station codes (owner idea 20, JR East style)
+1. Dashboard → **ATU** → **Station codes**. Pick a route; set **Prefix** (1-4 letters), **Start**, **Step** (negative counts down), **Digits** (padding). The preview shows each station's new name in route order; a loop's return visit is numbered once.
+2. **Apply codes** adds the code as the last part of the name (`新宿|Shinjuku|JY17`), so MTR's own signs, maps and the dashboard show it ("Alpha AT03"). Applying again with the same prefix replaces the code; another prefix (an interchange line) is kept next to it.
+3. **Remove this prefix** takes only that line's codes back off.
