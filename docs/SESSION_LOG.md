@@ -43,3 +43,10 @@
 - `ZoneHeightScreen` for stations and depots; preview diff of platform/siding assignment on every field edit (not per frame); `MtrBridge.applyHeight` sends `addStation`/`addDepot`. Zone reading generalised to depots + sidings.
 - Self-test 35/35 PASS: range excluding the station's platform is warned about ("Platform 1: … → (none)"), bad input keeps Save off, range keeping it says "No platform changes station", saved → MTR core has Y −63..−54 and still assigns the platform → restored to unbounded.
 - Self-test now opens on the non-primary monitor and never captures the mouse (dev-only Minecraft mixin in `src/selftest`; release jar checked: no mixins).
+
+## 2026-10-02 — owner ideas review, depot health
+
+- Sonnet subagent reviewed the owner's `MTR IDEADS.md` → `docs/OWNER_IDEAS_REVIEW.md` (45 ideas; owner decisions recorded there: builders → ATA, station codes in the name, first-station target-time helper OK, loop depot mode to be checked by us).
+- Note: an `MtrBridge` edit the tool reported as rejected had in fact been written; kept (it is the depot reader the owner then asked to finish) and told the owner.
+- Depot health: MTR sends `lastGeneratedStatus`, failed start/end platform and failed siding count to the client (`DepotSchema.serializeData`). Pure `depot/DepotHealth` (status + setup checks, worst-first order), 6 unit tests (41 total). `DepotHealthScreen` + Regenerate one / all with errors / Refresh.
+- Self-test 39/39 PASS: emptied the siding's train → reported "1 of 1 siding(s) have no train"; pressed Regenerate → MTR's `lastGeneratedMillis` was 1.3 s old, status SUCCESSFUL (first live proof the Regenerate button works); train restored.

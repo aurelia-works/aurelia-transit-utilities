@@ -37,6 +37,9 @@ public final class AtuToolsScreen extends Screen {
 		final ButtonWidget heights = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.height"), button -> client.setScreen(new ZoneHeightScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
 		heights.active = MtrBridge.canEdit();
 		y += 24;
+		// Read-only until Regenerate is pressed, so it stays open without edit permission.
+		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.depots"), button -> client.setScreen(new DepotHealthScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
+		y += 24;
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions(x, height - 28, BUTTON_WIDTH, 20).build());
 	}
 

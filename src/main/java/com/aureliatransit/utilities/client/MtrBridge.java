@@ -1,5 +1,6 @@
 package com.aureliatransit.utilities.client;
 
+import com.aureliatransit.utilities.depot.DepotHealth;
 import com.aureliatransit.utilities.overlap.Box;
 import com.aureliatransit.utilities.overlap.HeightRange;
 import com.aureliatransit.utilities.overlap.OverlapResolver;
@@ -9,6 +10,7 @@ import com.aureliatransit.utilities.preset.PresetCar;
 import com.aureliatransit.utilities.preset.TrainPreset;
 import org.mtr.core.data.AreaBase;
 import org.mtr.core.data.Depot;
+import org.mtr.core.data.Platform;
 import org.mtr.core.data.Position;
 import org.mtr.core.data.Route;
 import org.mtr.core.data.SavedRailBase;
@@ -159,6 +161,37 @@ public final class MtrBridge {
 			}
 		}
 		send(request -> changed.forEach(request::addStation));
+	}
+
+	/** Reads one depot's generation result and setup for {@link DepotHealth}. */
+	public static DepotHealth.DepotInfo depotInfo(Depot depot) {
+		final List<String> tooShort = new ArrayList<>();
+		final List<String> deletedPlatforms = new ArrayList<>();
+		depot.routes.forEach(route -> {
+			if (route.getRoutePlatforms().size() < 2) {
+				tooShort.add(displayName(route.getName()));
+			}
+			if (route.getRoutePlatforms().stream().anyMatch(data -> data.platform == null)) {
+				deletedPlatforms.add(displayName(route.getName()));
+			}
+		});
+		final long[] failed = new long[3];
+		depot.getFailedPlatformIds((start, end) -> {
+			failed[0] = start;
+			failed[1] = end;
+		}, count -> failed[2] = count);
+		final int sidingsWithoutTrain = (int) depot.savedRails.stream().filter(siding -> siding.getVehicleCars().isEmpty()).count();
+		final Depot.GeneratedStatus status = depot.getLastGeneratedStatus();
+		return new DepotHealth.DepotInfo(depot.getId(), displayName(depot.getName()), DepotHealth.status(status == null ? null : status.name()), failed[0], failed[1], failed[2], depot.routes.size(), depot.savedRails.size(), sidingsWithoutTrain, tooShort, deletedPlatforms);
+	}
+
+	/** "Platform 2 (Central)" for messages; works for deleted platforms too. */
+	public static String platformLabel(long platformId) {
+		final Platform platform = dashboardData().platformIdMap.get(platformId);
+		if (platform == null) {
+			return "#" + Long.toHexString(platformId);
+		}
+		return platform.getName() + (platform.area == null ? "" : " (" + displayName(platform.area.getName()) + ")");
 	}
 
 	/** MTR stores alternative-language names separated by '|'. */

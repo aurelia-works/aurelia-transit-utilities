@@ -40,3 +40,8 @@ Test world: `run/` is git-ignored. `ATU Test` is a copy of ATA's `run/client/sav
 1. Dashboard → **ATU** → **Zone heights**. Stations (■) and depots (⌂) are listed with their height ("any height" is how MTR draws zones).
 2. Pick one; type **Bottom Y** / **Top Y** (blank = no limit) or press **My Y** to use your feet. The preview lists every platform (or siding, for depots) that would change station (or depot), before anything is saved.
 3. **Save**. Typical use: give the subway station "up to Y 40" and the street station "Y 41 and up" so both can share the same map area.
+
+### Depot health (#918 and the "path won't generate" reports)
+1. Dashboard → **ATU** → **Depot health**. Every depot, worst first: ✖ red = errors, ! orange = warnings, ✔ green = fine.
+2. Pick one: MTR's last generation result in words ("No path found between platform 2 (Central) and platform 1 (Harbour)…") plus setup mistakes (no routes, no sidings, sidings without a train, routes with under two stops or deleted platforms).
+3. **Regenerate this depot** / **Regenerate all with ✖** send MTR's own Generate; press **Refresh** after a moment for the new result. The screen never polls.
