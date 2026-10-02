@@ -1,0 +1,14 @@
+{
+	"schemaVersion": 1,
+	"id": "atu_selftest",
+	"version": "0.0.0",
+	"name": "ATU self-test (dev only)",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["com.aureliatransit.utilities.selftest.AtuSelfTest"]
+	},
+	"depends": {
+		"aurelia_transit_utilities": "*",
+		"mtr": "*"
+	}
+}

@@ -1,1 +1,27 @@
-{}
+{
+	"gui.aurelia_transit_utilities.dashboard_button": "ATU",
+	"gui.aurelia_transit_utilities.no_permission": "You need MTR edit permission (creative or survival mode) to change transit data.",
+	"gui.aurelia_transit_utilities.tools.title": "Aurelia Transit Utilities",
+	"gui.aurelia_transit_utilities.tools.presets": "Train presets",
+	"gui.aurelia_transit_utilities.presets.title": "Train presets",
+	"gui.aurelia_transit_utilities.presets.search": "Search sidings",
+	"gui.aurelia_transit_utilities.presets.name": "Preset name",
+	"gui.aurelia_transit_utilities.presets.save": "Save this siding's train",
+	"gui.aurelia_transit_utilities.presets.apply": "Apply to siding",
+	"gui.aurelia_transit_utilities.presets.delete": "Delete preset",
+	"gui.aurelia_transit_utilities.presets.entry": "%s  (%s cars, %s)",
+	"gui.aurelia_transit_utilities.presets.current": "Current train: %s cars, %s / rail %s",
+	"gui.aurelia_transit_utilities.presets.pick_siding": "Pick a siding on the left.",
+	"gui.aurelia_transit_utilities.presets.no_sidings": "No sidings. Open this from the MTR dashboard.",
+	"gui.aurelia_transit_utilities.presets.saved": "Saved preset \"%s\".",
+	"gui.aurelia_transit_utilities.presets.replaced": "Updated preset \"%s\".",
+	"gui.aurelia_transit_utilities.presets.deleted": "Deleted preset \"%s\".",
+	"gui.aurelia_transit_utilities.presets.applied": "Applied \"%s\" to siding %s. Regenerate its depot if trains do not update.",
+	"gui.aurelia_transit_utilities.presets.put.empty_name": "Give the preset a name first.",
+	"gui.aurelia_transit_utilities.presets.put.no_cars": "This siding has no train to save.",
+	"gui.aurelia_transit_utilities.presets.put.too_many_cars": "Too many cars for one preset.",
+	"gui.aurelia_transit_utilities.presets.put.library_full": "Preset library is full (256). Delete one first.",
+	"gui.aurelia_transit_utilities.presets.problem.mode": "Not applied: preset is for %s, siding is %s.",
+	"gui.aurelia_transit_utilities.presets.problem.missing": "Not applied: vehicles not loaded: %s",
+	"gui.aurelia_transit_utilities.presets.problem.length": "Not applied: train is %s, siding rail is only %s."
+}

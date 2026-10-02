@@ -18,11 +18,31 @@ repositories {
 	}
 }
 
+// Dev-only self-test mod (src/selftest): never part of the release jar. `./gradlew runSelftest` boots straight into
+// run/selftest/saves/ATU Test, drives the ATU tools against real MTR data and writes run/selftest/atu_selftest.txt.
+sourceSets {
+	selftest {
+		compileClasspath += main.compileClasspath + main.output
+		runtimeClasspath += main.runtimeClasspath + main.output
+	}
+}
+
 loom {
+	mods {
+		aurelia_transit_utilities { sourceSet sourceSets.main }
+		atu_selftest { sourceSet sourceSets.selftest }
+	}
 	runs {
 		configureEach { ideConfigGenerated = true }
 		server { runDir = "run/server" }
 		client { runDir = "run/client" }
+		selftest {
+			client()
+			name = "ATU self-test"
+			source sourceSets.selftest
+			runDir = "run/selftest"
+			programArgs "--quickPlaySingleplayer", "ATU Test"
+		}
 	}
 }
 
