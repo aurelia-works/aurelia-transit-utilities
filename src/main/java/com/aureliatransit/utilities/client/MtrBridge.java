@@ -8,6 +8,7 @@ import com.aureliatransit.utilities.overlap.Point;
 import com.aureliatransit.utilities.overlap.Zones;
 import com.aureliatransit.utilities.preset.PresetCar;
 import com.aureliatransit.utilities.preset.TrainPreset;
+import com.aureliatransit.utilities.timetable.Timetable;
 import org.mtr.core.data.AreaBase;
 import org.mtr.core.data.Depot;
 import org.mtr.core.data.Platform;
@@ -32,6 +33,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.function.Consumer;
 
 /**
@@ -192,6 +194,40 @@ public final class MtrBridge {
 			return "#" + Long.toHexString(platformId);
 		}
 		return platform.getName() + (platform.area == null ? "" : " (" + displayName(platform.area.getName()) + ")");
+	}
+
+	/**
+	 * MTR stores timed departures as UTC milliseconds of the day; its depot screen parses and shows them in the local
+	 * time zone ({@code EditDepotScreen.checkDeparture} / {@code updateList}). ATU works in local time like MTR's screen.
+	 */
+	private static long zoneOffset() {
+		return TimeZone.getDefault().getOffset(System.currentTimeMillis());
+	}
+
+	public static List<Long> localDepartures(Depot depot) {
+		final List<Long> local = new ArrayList<>();
+		final long offset = zoneOffset();
+		depot.getRealTimeDepartures().forEach(stored -> local.add(Math.floorMod(stored + offset, Timetable.DAY)));
+		return Timetable.normalise(local);
+	}
+
+	/** Replaces the depot's timed departures (and switches it to timed mode) and sends it. Caller checked canEdit. */
+	public static void saveDepartures(Depot depot, List<Long> localTimes) {
+		final long offset = zoneOffset();
+		final var stored = depot.getRealTimeDepartures();
+		stored.clear();
+		Timetable.normalise(localTimes).forEach(local -> stored.add(Math.floorMod(local - offset, Timetable.DAY)));
+		depot.setUseRealTime(true);
+		send(request -> request.addDepot(depot));
+	}
+
+	/** Sets MTR's per-hour frequency values (0..20 quarter trains per hour) and switches to that mode. */
+	public static void saveFrequencies(Depot depot, int[] frequencies) {
+		for (int hour = 0; hour < 24; hour++) {
+			depot.setFrequency(hour, Math.max(0, Math.min(Timetable.MAX_FREQUENCY, frequencies[hour])));
+		}
+		depot.setUseRealTime(false);
+		send(request -> request.addDepot(depot));
 	}
 
 	/** MTR stores alternative-language names separated by '|'. */

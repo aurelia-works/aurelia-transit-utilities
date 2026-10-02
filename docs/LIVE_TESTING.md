@@ -50,3 +50,11 @@ Test world: `run/` is git-ignored. `ATU Test` is a copy of ATA's `run/client/sav
 1. Dashboard → **ATU** → **Station codes**. Pick a route; set **Prefix** (1-4 letters), **Start**, **Step** (negative counts down), **Digits** (padding). The preview shows each station's new name in route order; a loop's return visit is numbered once.
 2. **Apply codes** adds the code as the last part of the name (`新宿|Shinjuku|JY17`), so MTR's own signs, maps and the dashboard show it ("Alpha AT03"). Applying again with the same prefix replaces the code; another prefix (an interchange line) is kept next to it.
 3. **Remove this prefix** takes only that line's codes back off.
+
+### Departure times (MTR #1289, #1409; owner ideas 22, 33, 34)
+Dashboard → **ATU** → **Departure times**, pick a depot. It opens on the tab that matches how the depot runs now. Nothing is sent until a Save button.
+- **Timed**: From/to/every builds an even service (**Add** merges, **Replace** starts over; past midnight works). **Depot → 1st stop** (minutes): the times you type are when trains should be at the first station; the depot departs that much earlier. **Rest** + **No trains** removes a time window. **Shift** moves everything later/earlier. The summary shows count, first, last and longest wait. **Save as timed departures** switches the depot to timed mode.
+- **Trains per hour**: give a gap to a range of hours, or **No trains those hours** (rest hours). MTR allows at most 5 trains an hour (gap ≥ 12 min); the grid shows what MTR will run. **Save as trains per hour**.
+- **Loop**: for depots set to "repeat infinitely", each train circles forever, so rest hours are impossible there (MTR repeats every departure each round trip). Enter the round-trip time and the number of trains; **Space evenly** gives one departure per train, evenly apart.
+- Times are local clock time, exactly like MTR's own depot screen. Regenerate the depot if trains don't follow.
+- Travel time to the first stop has to be typed: the client receives no depot path data from MTR (checked live: 0 path segments).
