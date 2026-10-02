@@ -15,6 +15,8 @@ final class SecondMonitor {
 	}
 
 	static void move(MinecraftClient client) {
+		// Keep running normally while the owner works in other windows.
+		client.options.pauseOnLostFocus = false;
 		final PointerBuffer monitors = GLFW.glfwGetMonitors();
 		if (monitors == null || monitors.limit() < 2) {
 			AtuSelfTest.LOGGER.info("[ATU-SELFTEST] one monitor only, window not moved");

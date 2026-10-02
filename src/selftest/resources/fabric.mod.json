@@ -5,10 +5,15 @@
 	"name": "ATU self-test (dev only)",
 	"environment": "client",
 	"entrypoints": {
-		"client": ["com.aureliatransit.utilities.selftest.AtuSelfTest"]
+		"client": [
+			"com.aureliatransit.utilities.selftest.AtuSelfTest"
+		]
 	},
 	"depends": {
 		"aurelia_transit_utilities": "*",
 		"mtr": "*"
-	}
+	},
+	"mixins": [
+		"atu_selftest.mixins.json"
+	]
 }
