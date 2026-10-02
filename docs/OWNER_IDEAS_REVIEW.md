@@ -110,3 +110,11 @@ Each idea sits in exactly one bucket:
 - Unclear (4): 9, 10, 20, 45
 
 Total 45. The two "follow-up" rows in the Unclear table are extra questions about ideas that already have a bucket; they are not counted again.
+
+## Owner decisions (2026-10-02)
+
+- Tunnel builder, bridge creator, semi-underground wall creator (ideas 9, 10, 45): **ATA**, not ATU.
+- Station codes / JR East numbering (idea 20): **store in the station name** (e.g. `Shinjuku|JY17`); ATU gets a bulk numbering tool.
+- Loop lines, rest hours, fixed gap (ideas 33, 34): owner doesn't know which depot mode they use; ATU checks both "repeat infinitely" and timed departures against MTR's code.
+- First-station offset (idea 22): a "target time at the first station" helper is **close enough**.
+- Order: depot health screen → station codes tool → departure editor.
