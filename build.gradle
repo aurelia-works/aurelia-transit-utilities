@@ -1,0 +1,68 @@
+plugins {
+	id "fabric-loom" version "1.10.5"
+}
+
+version = "${project.mod_version}+mc${project.minecraft_version}-fabric"
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	exclusiveContent {
+		forRepository {
+			maven { name = "Modrinth"; url = "https://api.modrinth.com/maven" }
+		}
+		filter { includeGroup "maven.modrinth" }
+	}
+}
+
+loom {
+	runs {
+		configureEach { ideConfigGenerated = true }
+		server { runDir = "run/server" }
+		client { runDir = "run/client" }
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// MTR is a required runtime dependency (declared in fabric.mod.json). ATU calls MTR's public classes
+	// (client data, UpdateDataRequest, PacketUpdateData) but never bundles or re-exports MTR.
+	modCompileOnly "maven.modrinth:minecraft-transit-railway:${project.mtr_version}"
+	modLocalRuntime "maven.modrinth:minecraft-transit-railway:${project.mtr_version}"
+
+	// Pure-logic unit tests. Pure-logic classes do not touch Minecraft or MTR types.
+	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
+}
+
+processResources {
+	inputs.property "version", project.version
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 17
+	it.options.encoding = "UTF-8"
+}
+
+java {
+	toolchain { languageVersion = JavaLanguageVersion.of(17) }
+	withSourcesJar()
+}
+
+jar {
+	from("LICENSE") { rename { "${it}_${project.base.archivesName.get()}" } }
+}

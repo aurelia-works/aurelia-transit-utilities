@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "aurelia_transit_utilities",
+	"version": "${version}",
+	"name": "Aurelia Transit Utilities",
+	"description": "Quality-of-life tools for Minecraft Transit Railway: train presets for sidings, drag-and-drop route stop ordering, bulk platform dwell times and a station-overlap resolver. Client-side, no new blocks.",
+	"authors": [
+		"Aurelia Transit Utilities contributors"
+	],
+	"license": "MIT",
+	"icon": "assets/aurelia_transit_utilities/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.aureliatransit.utilities.client.AureliaTransitUtilitiesClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.15.0",
+		"minecraft": "1.20.1",
+		"java": ">=17",
+		"fabric-api": ">=0.92.0",
+		"mtr": ">=4.0.5 <4.1.0"
+	}
+}

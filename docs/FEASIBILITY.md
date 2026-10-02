@@ -66,7 +66,11 @@ Consequence: any station choice ATU stored itself would be overwritten on the ne
 
 Paths are fixed at generation: `Depot.generateMainRoute(...)` builds the path from each route's `RoutePlatformData` (fixed `platformId`), `SidingPathFinder(Data, startSavedRail, endSavedRail, stopIndex)` takes one fixed end platform per stop, `Siding.generateRoute(Platform, Platform, int, long)` likewise. `Vehicle` follows the precomputed `PathData` list; there is no runtime platform choice and no platform-group concept in the data model. Needs MTR simulation and data-model changes. **Upstream only** (or a large mixin into `Depot`/`Siding`/`Vehicle`, not recommended).
 
-## Owner decisions needed
+## Decision (2026-10-02)
+
+Owner delegated the choice; ATU is a quality-of-life release, no blocks. ATU 1.0 = **U2 presets, U3 route stop order screen, U4 bulk dwell, U1 overlap resolver**, all without mixins, client-side only (`environment: client`, writes go through MTR's own `PacketUpdateData`). U1 full assignment, U4 per-route speed, U5 and U6 stay out of 1.0 and are left for upstream MTR.
+
+## Owner decisions that were open
 
 1. ATU 1.0 subset. Proposal: U2, U3 (ATU screen), U4 dwell, U1 overlap resolver.
 2. U1: accept the honest subset for 1.0, or authorise a mixin on `Data.sync()` / `mapAreasAndSavedRails` (and the ATU-side override storage and sync that comes with it).
