@@ -97,6 +97,10 @@ public final class SimpleListWidget<T> extends AlwaysSelectedEntryListWidget<Sim
 			return false;
 		}
 
+		public T value() {
+			return item.value();
+		}
+
 		@Override
 		public Text getNarration() {
 			return item.label();

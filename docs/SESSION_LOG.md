@@ -21,3 +21,10 @@
 - UI: `DragListWidget` (drag with ghost row + insertion line, auto-scroll, Move up/down, Shift+arrows) and `RouteStopsScreen`. Save reorders the live `Route.getRoutePlatforms()` list and sends `addRoute`; "Regenerate depots" sends `PacketDepotGenerate(DepotOperationByIds)` like MTR's depot screen, only on click.
 - Live (self-test, 16/16 PASS): real mouseClicked/mouseDragged/mouseReleased on the list moved stop 1 to the end; saved; re-fetched from MTR core: order `[B, C, A]`; restored with the Move up button and Save; re-fetched: original order. Screenshot showed the "Regenerate depots" label clipped at 90 px; buttons widened to 110 px and checked again.
 - Not checked live: Regenerate depots actually rebuilding paths (button sends MTR's own packet; not exercised by the self-test).
+
+## 2026-10-02 — U4 platform dwell (per-route speed stays out, see FEASIBILITY)
+
+- MTR rule read from bytecode: `PlatformScreen.onClose2` stores `(minutes*60 + halfSecondSlider/2) * 1000` ms; sliders allow 0-10 min and 0-59.5 s, `tick2` forces at least 0.5 s and nothing past 10:00.
+- Pure logic `dwell/DwellTime`: parse (`30`, `12.5`, `1:30`, `1m30s`, `2m`), half-second rounding, MTR range, clamp/adjust, format. 5 unit tests (19 total) pass.
+- `PlatformDwellScreen`: scopes all / station (`AreaBase.savedRails`) / route (route order, each platform once), tick list, Set / ±5 s, one `UpdateDataRequest` with every changed platform; Regenerate depots = union of `platform.routes[].depots`. Cable-car platforms excluded.
+- Live (self-test, 22/22 PASS): unticked one of 3 route platforms, "0" kept Set disabled, Set 42.5 then +5 s; re-fetched from MTR core: `10000(unticked) 47500 47500`; restored to 10000 and verified. Screenshot showed the dwell value cut off behind long station names; label reordered to dwell-first and rechecked.

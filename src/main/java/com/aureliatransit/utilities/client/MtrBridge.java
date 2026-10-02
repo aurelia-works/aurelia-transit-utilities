@@ -5,6 +5,7 @@ import com.aureliatransit.utilities.preset.TrainPreset;
 import org.mtr.core.data.Siding;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.data.VehicleCar;
+import org.mtr.core.data.Depot;
 import org.mtr.core.data.Route;
 import org.mtr.core.operation.DepotOperationByIds;
 import org.mtr.core.operation.UpdateDataRequest;
@@ -16,6 +17,7 @@ import org.mtr.mod.packet.PacketDepotGenerate;
 import org.mtr.mod.packet.PacketUpdateData;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,12 +74,16 @@ public final class MtrBridge {
 
 	/** Same request as the Generate button in MTR's depot screen. Only ever sent on an explicit click. */
 	public static int regenerateDepots(Route route) {
+		return regenerateDepots(route.depots);
+	}
+
+	public static int regenerateDepots(Collection<Depot> depots) {
 		final DepotOperationByIds operation = new DepotOperationByIds();
-		route.depots.forEach(depot -> operation.addDepotId(depot.getId()));
-		if (!route.depots.isEmpty()) {
+		depots.forEach(depot -> operation.addDepotId(depot.getId()));
+		if (!depots.isEmpty()) {
 			InitClient.REGISTRY_CLIENT.sendPacketToServer(new PacketDepotGenerate(operation));
 		}
-		return route.depots.size();
+		return depots.size();
 	}
 
 	/** MTR stores alternative-language names separated by '|'. */

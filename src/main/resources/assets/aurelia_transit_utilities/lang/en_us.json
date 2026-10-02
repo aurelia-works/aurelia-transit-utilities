@@ -44,5 +44,18 @@
 	"gui.aurelia_transit_utilities.stops.changed_elsewhere": "This route was changed elsewhere. Reloaded it; nothing was saved.",
 	"gui.aurelia_transit_utilities.stops.saved": "Saved. Regenerate depots so trains follow the new order.",
 	"gui.aurelia_transit_utilities.stops.saved_no_depot": "Saved. No depot runs this route yet.",
-	"gui.aurelia_transit_utilities.stops.regenerating": "Regenerating %s depot(s)."
+	"gui.aurelia_transit_utilities.stops.regenerating": "Regenerating %s depot(s).",
+	"gui.aurelia_transit_utilities.tools.dwell": "Platform dwell times",
+	"gui.aurelia_transit_utilities.dwell.title": "Platform dwell times",
+	"gui.aurelia_transit_utilities.dwell.scope_all": "All platforms",
+	"gui.aurelia_transit_utilities.dwell.pick_scope": "Pick a scope on the left.",
+	"gui.aurelia_transit_utilities.dwell.ticked": "%s of %s ticked (click a row to toggle)",
+	"gui.aurelia_transit_utilities.dwell.all": "All",
+	"gui.aurelia_transit_utilities.dwell.none": "None",
+	"gui.aurelia_transit_utilities.dwell.field": "e.g. 30 or 1:30",
+	"gui.aurelia_transit_utilities.dwell.set": "Set dwell",
+	"gui.aurelia_transit_utilities.dwell.invalid": "Dwell must be between 0.5 s and 10:00, in half seconds.",
+	"gui.aurelia_transit_utilities.dwell.unchanged": "Nothing changed.",
+	"gui.aurelia_transit_utilities.dwell.applied": "%s platform(s) changed (%s). Regenerate depots so trains use the new times.",
+	"gui.aurelia_transit_utilities.dwell.applied_no_depot": "%s platform(s) changed (%s). No depot serves them yet."
 }

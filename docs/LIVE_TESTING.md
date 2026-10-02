@@ -22,3 +22,9 @@ Test world: `run/` is git-ignored. `ATU Test` is a copy of ATA's `run/client/sav
 3. **Save order** writes the route. Reopen it in MTR's own route editor: same order, custom destinations still on the same stops.
 4. **Regenerate depots** sends MTR's depot Generate for every depot that runs the route. Trains only follow a new order after that (same as editing in MTR).
 5. Switching to another route with unsaved edits drops them and says so. If the route's stop count changed elsewhere in the meantime, Save refuses and reloads it.
+
+### Platform dwell times (U4, dwell part)
+1. Dashboard → **ATU** → **Platform dwell times**. Pick **All platforms**, a station (■) or a route (→). Its platforms are listed with their current dwell, all ticked. Click a row to untick or tick it; **All / None**.
+2. Type a time (`30`, `12.5`, `1:30`, `2m`) and **Set dwell**, or use **-5 s / +5 s**. Limits are MTR's own: 0.5 s to 10:00 in half seconds; anything else keeps Set disabled.
+3. Reopen a changed platform in MTR's platform screen: same dwell. **Regenerate depots** rebuilds the depots of every route through the changed platforms (needed for running trains to use the new times, same as MTR).
+4. Cable-car platforms are not listed (MTR ignores dwell for continuous movement, #1375).
