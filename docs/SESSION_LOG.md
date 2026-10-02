@@ -63,3 +63,9 @@
 - Pure `timetable/Timetable` (parse/format, even service incl. past midnight, merge, shift, rest window incl. past midnight, longest gap, even loop spacing, frequency ↔ gap, first-station helper; bounded to 2000). 9 unit tests (54 total).
 - `DepartureEditorScreen` with Timed / Trains per hour / Loop tabs; first layout overlapped badly at 427×240 GUI (screenshot), rebuilt with measured row layout and tabs, rechecked. Hub now lays tools in two columns when they don't fit.
 - Self-test 48/48 PASS: Replace 06:00–07:00/15 → 5 times; first-station helper (08:00 at stop, 3 min travel) added 07:57; rest 06:20–06:40 removed 06:30; saved, re-fetched: timed mode with exactly `[06:00, 06:15, 06:45, 07:00, 07:57]`; hours 6–8 every 15 → MTR frequency 16 for 06/07/08, 09 untouched; depot restored and verified. Client has no depot path data (0 segments) → travel time is typed.
+
+## 2026-10-02 — jump to
+
+- Pure `jump/JumpTarget` (stand one block above the first rail, /tp commands, search). 3 unit tests (57 total).
+- `JumpScreen`: stations, platforms, depots, sidings; sends `/tp @s x y z` via the player's own command channel (server permission applies); disabled with a message without permission level 2.
+- Self-test 52/52 PASS: jumped to "Platform 1 — Alpha", player arrived at 16.5 −59.1 0.5 for target 16 −59 0, screens closed, teleported back. Hub shows all 9 tools in two columns at 427×240.

@@ -165,5 +165,11 @@
 	"gui.aurelia_transit_utilities.departures.label.trains": "trains",
 	"gui.aurelia_transit_utilities.departures.label.round_trip": "Round trip",
 	"gui.aurelia_transit_utilities.departures.no_trains": "No trains those hours",
-	"gui.aurelia_transit_utilities.departures.hours_cleared": "Hours %s to %s: no trains. Not saved yet."
+	"gui.aurelia_transit_utilities.departures.hours_cleared": "Hours %s to %s: no trains. Not saved yet.",
+	"gui.aurelia_transit_utilities.tools.jump": "Jump to…",
+	"gui.aurelia_transit_utilities.jump.title": "Jump to a station, platform, depot or siding",
+	"gui.aurelia_transit_utilities.jump.search": "Search",
+	"gui.aurelia_transit_utilities.jump.go": "Jump",
+	"gui.aurelia_transit_utilities.jump.none": "Nothing to jump to. Open this from the MTR dashboard.",
+	"gui.aurelia_transit_utilities.jump.no_permission": "Jumping uses /tp: you need operator rights or cheats on."
 }

@@ -27,7 +27,9 @@ public final class AtuToolsScreen extends Screen {
 			new Tool("overlap", true, StationOverlapScreen::new),
 			new Tool("height", true, ZoneHeightScreen::new),
 			new Tool("codes", true, StationCodesScreen::new),
-			new Tool("depots", false, DepotHealthScreen::new)
+			new Tool("depots", false, DepotHealthScreen::new),
+			// /tp permission is checked by the server; the screen says so when the player lacks it.
+			new Tool("jump", false, JumpScreen::new)
 	);
 
 	private final Screen parent;

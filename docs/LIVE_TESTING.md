@@ -58,3 +58,6 @@ Dashboard → **ATU** → **Departure times**, pick a depot. It opens on the tab
 - **Loop**: for depots set to "repeat infinitely", each train circles forever, so rest hours are impossible there (MTR repeats every departure each round trip). Enter the round-trip time and the number of trains; **Space evenly** gives one departure per train, evenly apart.
 - Times are local clock time, exactly like MTR's own depot screen. Regenerate the depot if trains don't follow.
 - Travel time to the first stop has to be typed: the client receives no depot path data from MTR (checked live: 0 path segments).
+
+### Jump to (MTR #1112)
+Dashboard → **ATU** → **Jump to…**. Search, pick a station (■), platform, depot (⌂) or siding, **Jump**. It sends a normal `/tp`, so the server decides: operators or cheats on. Stations and depots put you on their first platform or siding (zones have no usable height); a zone with no rails keeps your current height.
