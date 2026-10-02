@@ -70,6 +70,8 @@ Paths are fixed at generation: `Depot.generateMainRoute(...)` builds the path fr
 
 Owner delegated the choice; ATU is a quality-of-life release, no blocks. ATU 1.0 = **U2 presets, U3 route stop order screen, U4 bulk dwell, U1 overlap resolver**, all without mixins, client-side only (`environment: client`, writes go through MTR's own `PacketUpdateData`). U1 full assignment, U4 per-route speed, U5 and U6 stay out of 1.0 and are left for upstream MTR.
 
+**Status 2026-10-02:** U2, U3, U4 dwell and U1 overlap resolver are built and pass the live self-test (see `SESSION_LOG.md`).
+
 ## Owner decisions that were open
 
 1. ATU 1.0 subset. Proposal: U2, U3 (ATU screen), U4 dwell, U1 overlap resolver.

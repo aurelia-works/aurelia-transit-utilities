@@ -28,3 +28,10 @@ Test world: `run/` is git-ignored. `ATU Test` is a copy of ATA's `run/client/sav
 2. Type a time (`30`, `12.5`, `1:30`, `2m`) and **Set dwell**, or use **-5 s / +5 s**. Limits are MTR's own: 0.5 s to 10:00 in half seconds; anything else keeps Set disabled.
 3. Reopen a changed platform in MTR's platform screen: same dwell. **Regenerate depots** rebuilds the depots of every route through the changed platforms (needed for running trains to use the new times, same as MTR).
 4. Cable-car platforms are not listed (MTR ignores dwell for continuous movement, #1375).
+
+### Station overlaps (U1)
+1. Dashboard → **ATU** → **Station overlaps**. Every platform inside two or more station zones is listed as "Platform @ current station (+ others)". "Current" is the station MTR picked (the first one in MTR's list).
+2. Pick a platform, then the station it should belong to. The right side shows which zone edges get cut back (for example "east edge x 277 → 275") and whether any other platform would change station (orange list). Nothing is sent yet.
+3. **Apply** cuts the zones. Reopen MTR's dashboard: the zone is smaller on the map, and the platform now shows under the chosen station (PIDS, announcements and route station lists follow).
+4. Stacked stations (subway under an overground station) are separated by height instead of on the map, because a map cut would move the other platform.
+5. If a zone would shrink to nothing, it says so and leaves the zones alone. If the red "differ from ATU's reading" warning ever shows, ATU's copy of MTR's rule is out of date: report it.

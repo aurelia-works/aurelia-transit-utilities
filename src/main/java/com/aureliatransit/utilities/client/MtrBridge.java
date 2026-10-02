@@ -1,12 +1,19 @@
 package com.aureliatransit.utilities.client;
 
+import com.aureliatransit.utilities.overlap.Box;
+import com.aureliatransit.utilities.overlap.OverlapResolver;
+import com.aureliatransit.utilities.overlap.Point;
+import com.aureliatransit.utilities.overlap.Zones;
 import com.aureliatransit.utilities.preset.PresetCar;
 import com.aureliatransit.utilities.preset.TrainPreset;
+import org.mtr.core.data.AreaBase;
+import org.mtr.core.data.Depot;
+import org.mtr.core.data.Position;
+import org.mtr.core.data.Route;
 import org.mtr.core.data.Siding;
+import org.mtr.core.data.Station;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.data.VehicleCar;
-import org.mtr.core.data.Depot;
-import org.mtr.core.data.Route;
 import org.mtr.core.operation.DepotOperationByIds;
 import org.mtr.core.operation.UpdateDataRequest;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -84,6 +91,41 @@ public final class MtrBridge {
 			InitClient.REGISTRY_CLIENT.sendPacketToServer(new PacketDepotGenerate(operation));
 		}
 		return depots.size();
+	}
+
+	/**
+	 * Station zones and platforms of one transport mode, in MTR's station order. Stations without valid corners are
+	 * left out, as MTR's {@code AreaBase.inArea} never matches them.
+	 */
+	public static Zones zones(TransportMode transportMode) {
+		final List<Zones.Station> stations = new ArrayList<>();
+		dashboardData().stations.forEach(station -> {
+			if (station.isTransportMode(transportMode) && AreaBase.validCorners(station)) {
+				stations.add(new Zones.Station(station.getId(), new Box(station.getMinX(), station.getMinY(), station.getMinZ(), station.getMaxX(), station.getMaxY(), station.getMaxZ())));
+			}
+		});
+		final List<Zones.Platform> platforms = new ArrayList<>();
+		dashboardData().platforms.forEach(platform -> {
+			if (platform.isTransportMode(transportMode)) {
+				final Position mid = platform.getMidPosition();
+				platforms.add(new Zones.Platform(platform.getId(), new Point(mid.getX(), mid.getY(), mid.getZ())));
+			}
+		});
+		return new Zones(stations, platforms);
+	}
+
+	/** Sends the planned zone cuts. Caller has shown the plan and checked {@link #canEdit()}. */
+	public static void applyCuts(List<OverlapResolver.Cut> cuts) {
+		final List<Station> changed = new ArrayList<>();
+		for (final OverlapResolver.Cut cut : cuts) {
+			final Station station = dashboardData().stationIdMap.get(cut.stationId());
+			if (station != null) {
+				final Box box = cut.after();
+				station.setCorners(new Position(box.minX(), box.minY(), box.minZ()), new Position(box.maxX(), box.maxY(), box.maxZ()));
+				changed.add(station);
+			}
+		}
+		send(request -> changed.forEach(request::addStation));
 	}
 
 	/** MTR stores alternative-language names separated by '|'. */

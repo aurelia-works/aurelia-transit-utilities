@@ -31,6 +31,9 @@ public final class AtuToolsScreen extends Screen {
 		final ButtonWidget dwell = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.dwell"), button -> client.setScreen(new PlatformDwellScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
 		dwell.active = MtrBridge.canEdit();
 		y += 24;
+		final ButtonWidget overlap = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.overlap"), button -> client.setScreen(new StationOverlapScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
+		overlap.active = MtrBridge.canEdit();
+		y += 24;
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions(x, height - 28, BUTTON_WIDTH, 20).build());
 	}
 

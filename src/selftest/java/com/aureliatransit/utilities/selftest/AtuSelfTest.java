@@ -42,6 +42,7 @@ public final class AtuSelfTest implements ClientModInitializer {
 		PresetSelfTest.addSteps(this);
 		RouteStopsSelfTest.addSteps(this);
 		DwellSelfTest.addSteps(this);
+		OverlapSelfTest.addSteps(this);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 	}
 

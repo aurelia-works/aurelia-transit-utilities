@@ -57,5 +57,19 @@
 	"gui.aurelia_transit_utilities.dwell.invalid": "Dwell must be between 0.5 s and 10:00, in half seconds.",
 	"gui.aurelia_transit_utilities.dwell.unchanged": "Nothing changed.",
 	"gui.aurelia_transit_utilities.dwell.applied": "%s platform(s) changed (%s). Regenerate depots so trains use the new times.",
-	"gui.aurelia_transit_utilities.dwell.applied_no_depot": "%s platform(s) changed (%s). No depot serves them yet."
+	"gui.aurelia_transit_utilities.dwell.applied_no_depot": "%s platform(s) changed (%s). No depot serves them yet.",
+	"gui.aurelia_transit_utilities.tools.overlap": "Station overlaps",
+	"gui.aurelia_transit_utilities.overlap.title": "Station overlaps",
+	"gui.aurelia_transit_utilities.overlap.none": "No platform is inside two station zones.",
+	"gui.aurelia_transit_utilities.overlap.pick": "Pick a platform on the left.",
+	"gui.aurelia_transit_utilities.overlap.choose": "Which station should it belong to?",
+	"gui.aurelia_transit_utilities.overlap.current": "%s (current)",
+	"gui.aurelia_transit_utilities.overlap.will_change": "Station zones that will be cut back:",
+	"gui.aurelia_transit_utilities.overlap.no_side_effects": "No other platform changes station.",
+	"gui.aurelia_transit_utilities.overlap.side_effects": "Also changes %s other platform(s):",
+	"gui.aurelia_transit_utilities.overlap.not_reached": "This would still not give it to that station.",
+	"gui.aurelia_transit_utilities.overlap.impossible": "Can't separate: a zone would shrink to nothing. Redraw the zones in MTR.",
+	"gui.aurelia_transit_utilities.overlap.apply": "Apply",
+	"gui.aurelia_transit_utilities.overlap.applied": "%s now belongs to %s.",
+	"gui.aurelia_transit_utilities.overlap.mismatch": "Warning: %s platform(s) differ from ATU's reading of MTR's rule. Nothing is wrong in MTR; please report this."
 }
