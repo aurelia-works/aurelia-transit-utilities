@@ -199,7 +199,7 @@ public final class StationCodesScreen extends Screen {
 		} else {
 			for (int i = 0; i < newNames.size() && y < height - 90; i++, y += 11) {
 				final boolean same = newNames.get(i).equals(stations.get(i).getName());
-				final String line = (i + 1) + ". " + MtrBridge.displayName(stations.get(i).getName()) + "  →  " + newNames.get(i);
+				final String line = (i + 1) + ". " + MtrBridge.displayName(stations.get(i).getName()) + "  →  " + MtrBridge.displayName(newNames.get(i));
 				context.drawText(textRenderer, textRenderer.trimToWidth(Text.literal(line), rightWidth).getString(), rightX, y, same ? COLOR_DIM : COLOR_TEXT, true);
 			}
 		}
