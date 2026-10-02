@@ -21,7 +21,7 @@ public final class AtuToolsScreen extends Screen {
 	@Override
 	protected void init() {
 		final int x = (width - BUTTON_WIDTH) / 2;
-		int y = height / 4 + 8;
+		int y = Math.max(40, height / 4 - 16);
 		final ButtonWidget presets = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.presets"), button -> client.setScreen(new TrainPresetScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
 		presets.active = MtrBridge.canEdit();
 		y += 24;
@@ -33,6 +33,9 @@ public final class AtuToolsScreen extends Screen {
 		y += 24;
 		final ButtonWidget overlap = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.overlap"), button -> client.setScreen(new StationOverlapScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
 		overlap.active = MtrBridge.canEdit();
+		y += 24;
+		final ButtonWidget heights = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.tools.height"), button -> client.setScreen(new ZoneHeightScreen(this))).dimensions(x, y, BUTTON_WIDTH, 20).build());
+		heights.active = MtrBridge.canEdit();
 		y += 24;
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions(x, height - 28, BUTTON_WIDTH, 20).build());
 	}

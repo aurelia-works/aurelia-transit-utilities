@@ -1,6 +1,7 @@
 package com.aureliatransit.utilities.client;
 
 import com.aureliatransit.utilities.overlap.Box;
+import com.aureliatransit.utilities.overlap.HeightRange;
 import com.aureliatransit.utilities.overlap.OverlapResolver;
 import com.aureliatransit.utilities.overlap.Point;
 import com.aureliatransit.utilities.overlap.Zones;
@@ -10,6 +11,7 @@ import org.mtr.core.data.AreaBase;
 import org.mtr.core.data.Depot;
 import org.mtr.core.data.Position;
 import org.mtr.core.data.Route;
+import org.mtr.core.data.SavedRailBase;
 import org.mtr.core.data.Siding;
 import org.mtr.core.data.Station;
 import org.mtr.core.data.TransportMode;
@@ -98,20 +100,51 @@ public final class MtrBridge {
 	 * left out, as MTR's {@code AreaBase.inArea} never matches them.
 	 */
 	public static Zones zones(TransportMode transportMode) {
+		return zones(dashboardData().stations, dashboardData().platforms, transportMode);
+	}
+
+	/** Depot zones and their sidings, same rule as stations and platforms. */
+	public static Zones depotZones(TransportMode transportMode) {
+		return zones(dashboardData().depots, dashboardData().sidings, transportMode);
+	}
+
+	private static Zones zones(Collection<? extends AreaBase<?, ?>> areas, Collection<? extends SavedRailBase<?, ?>> savedRails, TransportMode transportMode) {
 		final List<Zones.Station> stations = new ArrayList<>();
-		dashboardData().stations.forEach(station -> {
-			if (station.isTransportMode(transportMode) && AreaBase.validCorners(station)) {
-				stations.add(new Zones.Station(station.getId(), new Box(station.getMinX(), station.getMinY(), station.getMinZ(), station.getMaxX(), station.getMaxY(), station.getMaxZ())));
+		areas.forEach(area -> {
+			if (area.isTransportMode(transportMode) && validCorners(area)) {
+				stations.add(new Zones.Station(area.getId(), box(area)));
 			}
 		});
 		final List<Zones.Platform> platforms = new ArrayList<>();
-		dashboardData().platforms.forEach(platform -> {
-			if (platform.isTransportMode(transportMode)) {
-				final Position mid = platform.getMidPosition();
-				platforms.add(new Zones.Platform(platform.getId(), new Point(mid.getX(), mid.getY(), mid.getZ())));
+		savedRails.forEach(savedRail -> {
+			if (savedRail.isTransportMode(transportMode)) {
+				final Position mid = savedRail.getMidPosition();
+				platforms.add(new Zones.Platform(savedRail.getId(), new Point(mid.getX(), mid.getY(), mid.getZ())));
 			}
 		});
 		return new Zones(stations, platforms);
+	}
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public static boolean validCorners(AreaBase<?, ?> area) {
+		return AreaBase.validCorners((AreaBase) area);
+	}
+
+	public static Box box(AreaBase<?, ?> area) {
+		return new Box(area.getMinX(), area.getMinY(), area.getMinZ(), area.getMaxX(), area.getMaxY(), area.getMaxZ());
+	}
+
+	/** Sets a station's or depot's height range and sends it. Caller checked {@link #canEdit()}. */
+	public static void applyHeight(AreaBase<?, ?> area, HeightRange range) {
+		final Box box = range.applyTo(box(area));
+		area.setCorners(new Position(box.minX(), box.minY(), box.minZ()), new Position(box.maxX(), box.maxY(), box.maxZ()));
+		send(request -> {
+			if (area instanceof Station station) {
+				request.addStation(station);
+			} else if (area instanceof Depot depot) {
+				request.addDepot(depot);
+			}
+		});
 	}
 
 	/** Sends the planned zone cuts. Caller has shown the plan and checked {@link #canEdit()}. */

@@ -35,3 +35,11 @@
 - Pure logic `overlap/`: `Box`, `Point.midpoint`, `Zones` (assignment, conflicts, diff), `OverlapResolver` (cut every other zone containing the midpoint on one face; rank cuts by platforms moved, then map cut before height cut, then volume lost; report side effects; null when a zone would vanish). 10 unit tests (29 total) pass. The first ranking (volume only) chose a 1-block height cut on full-height zones; a test caught it and map cuts are now preferred unless a height cut moves fewer platforms (stacked stations).
 - `StationOverlapScreen`: conflicts per transport mode, station choice, plan preview with side effects, Apply sends `addStation` for each cut. Re-reads zones only on open/resize/Apply. Shows a warning if ATU's computed assignment ever disagrees with MTR's `platform.area`.
 - Live (self-test, 29/29 PASS): stretched a second station's zone over a platform; 0 mismatches between ATU's prediction and MTR's `platform.area` for all platforms; conflict listed with MTR's pick first; chose the other station; plan 1 cut, 0 side effects; after Apply and a fresh fetch MTR itself assigns the platform to the chosen station; both zones restored and verified.
+
+## 2026-10-02 — zone heights (#815), overflow fix, self-test comfort
+
+- Found while reading `DashboardScreen.onDrawCorners`: MTR draws every zone with Y `Long.MIN_VALUE`..`Long.MAX_VALUE`. `Box.volume()` overflowed on that (long arithmetic); now computed in double, regression test added.
+- `overlap/HeightRange` (blank = no limit, typed values bounded, bottom ≤ top, describe/apply). 5 unit tests (35 total) pass.
+- `ZoneHeightScreen` for stations and depots; preview diff of platform/siding assignment on every field edit (not per frame); `MtrBridge.applyHeight` sends `addStation`/`addDepot`. Zone reading generalised to depots + sidings.
+- Self-test 35/35 PASS: range excluding the station's platform is warned about ("Platform 1: … → (none)"), bad input keeps Save off, range keeping it says "No platform changes station", saved → MTR core has Y −63..−54 and still assigns the platform → restored to unbounded.
+- Self-test now opens on the non-primary monitor and never captures the mouse (dev-only Minecraft mixin in `src/selftest`; release jar checked: no mixins).

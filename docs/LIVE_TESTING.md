@@ -35,3 +35,8 @@ Test world: `run/` is git-ignored. `ATU Test` is a copy of ATA's `run/client/sav
 3. **Apply** cuts the zones. Reopen MTR's dashboard: the zone is smaller on the map, and the platform now shows under the chosen station (PIDS, announcements and route station lists follow).
 4. Stacked stations (subway under an overground station) are separated by height instead of on the map, because a map cut would move the other platform.
 5. If a zone would shrink to nothing, it says so and leaves the zones alone. If the red "differ from ATU's reading" warning ever shows, ATU's copy of MTR's rule is out of date: report it.
+
+### Zone heights (MTR #815)
+1. Dashboard → **ATU** → **Zone heights**. Stations (■) and depots (⌂) are listed with their height ("any height" is how MTR draws zones).
+2. Pick one; type **Bottom Y** / **Top Y** (blank = no limit) or press **My Y** to use your feet. The preview lists every platform (or siding, for depots) that would change station (or depot), before anything is saved.
+3. **Save**. Typical use: give the subway station "up to Y 40" and the street station "Y 41 and up" so both can share the same map area.
