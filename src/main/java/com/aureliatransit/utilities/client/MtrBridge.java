@@ -1,5 +1,6 @@
 package com.aureliatransit.utilities.client;
 
+import com.aureliatransit.utilities.announce.RideSnapshot;
 import com.aureliatransit.utilities.depot.DepotHealth;
 import com.aureliatransit.utilities.overlap.Box;
 import com.aureliatransit.utilities.overlap.HeightRange;
@@ -15,16 +16,21 @@ import org.mtr.core.data.Platform;
 import org.mtr.core.data.Position;
 import org.mtr.core.data.Route;
 import org.mtr.core.data.SavedRailBase;
+import org.mtr.core.data.SimplifiedRoute;
 import org.mtr.core.data.Siding;
 import org.mtr.core.data.Station;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.data.VehicleCar;
+import org.mtr.core.data.VehicleExtraData;
 import org.mtr.core.operation.DepotOperationByIds;
 import org.mtr.core.operation.UpdateDataRequest;
+import org.mtr.core.tool.Vector;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.mod.InitClient;
 import org.mtr.mod.client.CustomResourceLoader;
 import org.mtr.mod.client.MinecraftClientData;
+import org.mtr.mod.client.VehicleRidingMovement;
+import org.mtr.mod.data.VehicleExtension;
 import org.mtr.mod.packet.PacketDepotGenerate;
 import org.mtr.mod.packet.PacketUpdateData;
 
@@ -228,6 +234,51 @@ public final class MtrBridge {
 		}
 		depot.setUseRealTime(false);
 		send(request -> request.addDepot(depot));
+	}
+
+	/**
+	 * The vehicle the player rides, from MTR's live client data (not the dashboard copy), or null when not riding.
+	 * Rail progress and dwell time are not public in MTR, so the distance to the next stop is measured from the train's
+	 * head to the middle of the next platform, and only when MTR has sent that platform to the client.
+	 */
+	public static RideSnapshot ridingSnapshot() {
+		final MinecraftClientData data = MinecraftClientData.getInstance();
+		for (final VehicleExtension vehicle : data.vehicles) {
+			if (VehicleRidingMovement.isRiding(vehicle.getId())) {
+				return snapshot(data, vehicle);
+			}
+		}
+		return null;
+	}
+
+	private static RideSnapshot snapshot(MinecraftClientData data, VehicleExtension vehicle) {
+		final VehicleExtraData extra = vehicle.vehicleExtraData;
+		final List<RideSnapshot.Interchange> interchanges = new ArrayList<>();
+		extra.iterateInterchanges((stationName, colors) -> colors.forEach((color, routeNames) -> routeNames.forEach(routeName -> interchanges.add(new RideSnapshot.Interchange(stationName, color, routeName)))));
+		double distance = Double.NaN;
+		final Platform nextPlatform = data.platformIdMap.get(extra.getNextPlatformId());
+		final Vector head = vehicle.getHeadPosition();
+		if (nextPlatform != null && head != null) {
+			final Position mid = nextPlatform.getMidPosition();
+			distance = head.distanceTo(new Vector(mid.getX() + 0.5, mid.getY(), mid.getZ() + 0.5));
+		}
+		// MTR speeds are blocks per millisecond.
+		return new RideSnapshot(vehicle.getId(), extra.getThisPlatformId(), extra.getNextPlatformId(), extra.getNextStationName(), extra.getIsTerminating() || nextIsLastStop(data, extra),
+				extra.getThisRouteName(), extra.getThisRouteColor(), extra.getNextRouteName(), extra.getNextRouteColor(), extra.getNextRouteDestination(),
+				interchanges, vehicle.getSpeed() * 1000, vehicle.persistentVehicleData.getDoorValue(), distance,
+				data.getRouteIdHasDisabledAnnouncements(extra.getThisRouteId()));
+	}
+
+	/**
+	 * The next platform is the last one of the route the train is on. MTR's own {@code isTerminating} reached the client
+	 * as false on every leg in the self-test, so this reads the route's platform list instead. Circular routes never end.
+	 */
+	private static boolean nextIsLastStop(MinecraftClientData data, VehicleExtraData extra) {
+		final SimplifiedRoute route = data.simplifiedRouteIdMap.get(extra.getThisRouteId());
+		if (route == null || route.getCircularState() != Route.CircularState.NONE || route.getPlatforms().isEmpty()) {
+			return false;
+		}
+		return route.getPlatforms().get(route.getPlatforms().size() - 1).getPlatformId() == extra.getNextPlatformId();
 	}
 
 	/** MTR stores alternative-language names separated by '|'. */

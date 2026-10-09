@@ -30,16 +30,24 @@ public final class AtuSelfTest implements ClientModInitializer {
 
 	private final List<Step> steps = new ArrayList<>();
 	private final List<String> report = new ArrayList<>();
+	private final List<Runnable> cleanups = new ArrayList<>();
 	private int stepIndex;
 	private int waitTicks;
 	private int failures;
 	private boolean started;
 
-	private record Step(String name, Runnable action, BooleanSupplier until) {
+	private record Step(String name, Runnable action, BooleanSupplier until, int limitTicks) {
 	}
 
 	@Override
 	public void onInitializeClient() {
+		// run/selftest/atu_selftest_only.txt containing "announcer" runs only the announcer ride (it takes minutes).
+		if (onlyAnnouncer()) {
+			AnnouncerSelfTest.addSteps(this);
+			ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
+			ClientTickEvents.END_CLIENT_TICK.register(this::tick);
+			return;
+		}
 		PresetSelfTest.addSteps(this);
 		RouteStopsSelfTest.addSteps(this);
 		DwellSelfTest.addSteps(this);
@@ -49,26 +57,51 @@ public final class AtuSelfTest implements ClientModInitializer {
 		StationCodesSelfTest.addSteps(this);
 		DepartureSelfTest.addSteps(this);
 		JumpSelfTest.addSteps(this);
+		AnnouncerSelfTest.addSteps(this);
 		ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 	}
 
+	private static boolean onlyAnnouncer() {
+		try {
+			final Path file = net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().resolve("atu_selftest_only.txt");
+			return Files.exists(file) && Files.readString(file).trim().equals("announcer");
+		} catch (IOException e) {
+			return false;
+		}
+	}
+
+	/** Runs when the script ends, also after a failure; for undoing world changes. */
+	void onFinish(Runnable cleanup) {
+		cleanups.add(cleanup);
+	}
+
 	void act(String name, Runnable action) {
-		steps.add(new Step(name, action, null));
+		steps.add(new Step(name, action, null, 0));
 	}
 
 	void waitFor(String name, BooleanSupplier until) {
-		steps.add(new Step(name, null, until));
+		waitFor(name, until, WAIT_LIMIT_TICKS);
+	}
+
+	void waitFor(String name, BooleanSupplier until, int limitTicks) {
+		steps.add(new Step(name, null, until, limitTicks));
 	}
 
 	void pause(int ticks) {
 		final int[] counter = {0};
-		steps.add(new Step("pause " + ticks, null, () -> ++counter[0] >= ticks));
+		steps.add(new Step("pause " + ticks, null, () -> ++counter[0] >= ticks, ticks + 1));
 	}
 
 	void screenshot(String name) {
 		act("screenshot " + name, () -> ScreenshotRecorder.saveScreenshot(MinecraftClient.getInstance().runDirectory, "atu_" + name + ".png", MinecraftClient.getInstance().getFramebuffer(), text -> {
 		}));
+	}
+
+	void skip(String name, String reason) {
+		final String line = "SKIP " + name + " - " + reason;
+		report.add(line);
+		LOGGER.info("[ATU-SELFTEST] {}", line);
 	}
 
 	void check(String name, boolean ok, String detail) {
@@ -103,6 +136,10 @@ public final class AtuSelfTest implements ClientModInitializer {
 			started = true;
 			pauseStart = 60;
 		}
+		// A pause menu (e.g. focus lost on a single monitor) would stop the integrated server and every train with it.
+		if (client.currentScreen instanceof net.minecraft.client.gui.screen.GameMenuScreen) {
+			client.setScreen(null);
+		}
 		if (pauseStart > 0) {
 			pauseStart--;
 			return;
@@ -119,7 +156,7 @@ public final class AtuSelfTest implements ClientModInitializer {
 			} else if (step.until().getAsBoolean()) {
 				stepIndex++;
 				waitTicks = 0;
-			} else if (++waitTicks > WAIT_LIMIT_TICKS) {
+			} else if (++waitTicks > step.limitTicks()) {
 				check(step.name(), false, "timed out");
 				stepIndex = steps.size();
 			}
@@ -133,11 +170,25 @@ public final class AtuSelfTest implements ClientModInitializer {
 	private int pauseStart;
 	private boolean finished;
 
+	private int stopDelay;
+
 	private void finish(MinecraftClient client) {
 		if (finished) {
+			// Give cleanup packets time to reach the server before quitting.
+			if (stopDelay > 0 && --stopDelay == 0 && !Boolean.getBoolean("atu.selftest.stay")) {
+				client.scheduleStop();
+			}
 			return;
 		}
 		finished = true;
+		for (final Runnable cleanup : cleanups) {
+			try {
+				cleanup.run();
+			} catch (Throwable e) {
+				LOGGER.error("[ATU-SELFTEST] cleanup threw", e);
+				check("cleanup", false, "threw " + e);
+			}
+		}
 		report.add(failures == 0 ? "RESULT PASS" : "RESULT FAIL (" + failures + ")");
 		LOGGER.info("[ATU-SELFTEST] {}", report.get(report.size() - 1));
 		try {
@@ -145,8 +196,6 @@ public final class AtuSelfTest implements ClientModInitializer {
 		} catch (IOException e) {
 			LOGGER.error("[ATU-SELFTEST] could not write report", e);
 		}
-		if (!Boolean.getBoolean("atu.selftest.stay")) {
-			client.scheduleStop();
-		}
+		stopDelay = cleanups.isEmpty() ? 1 : 40;
 	}
 }

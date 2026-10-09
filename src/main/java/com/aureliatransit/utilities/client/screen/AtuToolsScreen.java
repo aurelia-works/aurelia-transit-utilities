@@ -1,9 +1,12 @@
 package com.aureliatransit.utilities.client.screen;
 
+import com.aureliatransit.utilities.client.Announcer;
 import com.aureliatransit.utilities.client.MtrBridge;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 
 import java.util.List;
@@ -42,7 +45,7 @@ public final class AtuToolsScreen extends Screen {
 	@Override
 	protected void init() {
 		final int top = 44;
-		final int rowsThatFit = Math.max(1, (height - 36 - top) / ROW);
+		final int rowsThatFit = Math.max(1, (height - 60 - top) / ROW);
 		final int columns = TOOLS.size() <= rowsThatFit ? 1 : 2;
 		final int buttonWidth = columns == 1 ? BUTTON_WIDTH : Math.min(BUTTON_WIDTH, (width - 24) / 2);
 		final int rows = (TOOLS.size() + columns - 1) / columns;
@@ -56,7 +59,17 @@ public final class AtuToolsScreen extends Screen {
 					.dimensions(left + column * (buttonWidth + 8), top + row * ROW, buttonWidth, 20).build());
 			button.active = canEdit || !tool.needsEdit();
 		}
+		// A player setting, not an edit: always available.
+		final ButtonWidget announcer = addDrawableChild(ButtonWidget.builder(announcerLabel(), b -> {
+			Announcer.setEnabled(!Announcer.enabled());
+			b.setMessage(announcerLabel());
+		}).dimensions((width - BUTTON_WIDTH) / 2, height - 52, BUTTON_WIDTH, 20).build());
+		announcer.setTooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.tools.announcer.tooltip")));
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions((width - BUTTON_WIDTH) / 2, height - 28, BUTTON_WIDTH, 20).build());
+	}
+
+	private static Text announcerLabel() {
+		return Text.translatable("gui.aurelia_transit_utilities.tools.announcer", ScreenTexts.onOrOff(Announcer.enabled()));
 	}
 
 	@Override

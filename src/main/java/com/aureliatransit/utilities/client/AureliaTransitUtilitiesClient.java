@@ -44,6 +44,7 @@ public final class AureliaTransitUtilitiesClient implements ClientModInitializer
 				ScreenMouseEvents.allowMouseClick(screen).register((clickedScreen, mouseX, mouseY, mouseButton) -> magicMenuOpen(clickedScreen) || !button.mouseClicked(mouseX, mouseY, mouseButton));
 			}
 		});
+		Announcer.register();
 		LOGGER.info("[ATU] Client initialised");
 	}
 

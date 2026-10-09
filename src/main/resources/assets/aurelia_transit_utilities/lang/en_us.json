@@ -171,5 +171,7 @@
 	"gui.aurelia_transit_utilities.jump.search": "Search",
 	"gui.aurelia_transit_utilities.jump.go": "Jump",
 	"gui.aurelia_transit_utilities.jump.none": "Nothing to jump to. Open this from the MTR dashboard.",
-	"gui.aurelia_transit_utilities.jump.no_permission": "Jumping uses /tp: you need operator rights or cheats on."
+	"gui.aurelia_transit_utilities.jump.no_permission": "Jumping uses /tp: you need operator rights or cheats on.",
+	"gui.aurelia_transit_utilities.tools.announcer": "Announcer: %s",
+	"gui.aurelia_transit_utilities.tools.announcer.tooltip": "Announces the next station, arrivals, changes and the last stop on MTR trains you ride. Plays AureliaEX station clips when a pack has them, otherwise a chime. Text appears above the hotbar."
 }
