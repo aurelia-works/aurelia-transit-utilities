@@ -1,15 +1,15 @@
 # ATU <-> JCM vehicle script handshake (protocol 2)
 
-ATU publishes settings to Joban Client Mod (JCM, mod id `jsblock`) vehicle scripts, so a train script such as AureliaEX `onboard.js` can adapt. Scripts read a key with `Resources.getAddonVersion(key)`; it returns a string, or `null` when nothing is registered.
+ATU publishes settings to Joban Client Mod (JCM, mod id `jsblock`) vehicle scripts, so a train script can adapt. Scripts read a key with `Resources.getAddonVersion(key)`; it returns a string, or `null` when nothing is registered.
 
 ## Keys (all values are strings)
 
 | Key | Value | Meaning |
 |---|---|---|
-| `aurelia_transit_utilities` | mod version, e.g. `1.2.0` | ATU is installed (unchanged since 1.1.0) |
+| `aurelia_transit_utilities` | ATU's friendly version string, e.g. `1.2.0+mc1.20.1-fabric` (not just `1.2.0`; compare by prefix if needed) | ATU is installed (unchanged since 1.1.0) |
 | `aurelia_transit_utilities:handshake` | `2` | protocol version; bumped only when a key changes meaning |
 | `aurelia_transit_utilities:announcer` | `on` / `off` | the Announcer speaks station info on rides; scripts should then skip their own next-station / last-stop announcements |
-| `aurelia_transit_utilities:announcer_lang` | `en` | language the Announcer speaks. It only supports English (text and the AureliaEX `next_<slug>` clips), so `en` is the only value; there is no auto/ja/zh |
+| `aurelia_transit_utilities:announcer_lang` | `en` | language the Announcer speaks. It only supports English (text and the `next_<slug>` clips), so `en` is the only value; there is no auto/ja/zh |
 | `aurelia_transit_utilities:melodies` | `on` / `off` | player preference: may vehicle scripts play their departure melodies. Stored by ATU, set in the ATU hub ("Vehicle melodies") |
 | `aurelia_transit_utilities:caps` | comma list, now `announcer,announcer_lang,melodies` | features this ATU publishes; check it before relying on a key |
 
@@ -34,4 +34,4 @@ ATU registers at client start and again whenever the Announcer or Melodies toggl
 
 ## Not verifiable without JCM
 
-Delivery into JCM's map and the scripts reading it are checked only in Noriega (e.g. via the AureliaEX Script Debug Overlay line). The dev self-test checks the published map, persistence and republishing.
+Delivery into JCM's map and the scripts reading it are checked only in Noriega (e.g. a line in JCM's Script Debug Overlay). The dev self-test checks the published map, persistence and republishing.
