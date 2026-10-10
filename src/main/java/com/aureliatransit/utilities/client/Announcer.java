@@ -62,7 +62,7 @@ public final class Announcer {
 
 	public static void register() {
 		load();
-		ScriptingHandshake.publish(enabled);
+		ScriptingHandshake.register(enabled);
 		ClientTickEvents.END_CLIENT_TICK.register(Announcer::tick);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> restoreMtrChat());
 	}

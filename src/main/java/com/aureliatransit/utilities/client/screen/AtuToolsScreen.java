@@ -1,6 +1,7 @@
 package com.aureliatransit.utilities.client.screen;
 
 import com.aureliatransit.utilities.client.Announcer;
+import com.aureliatransit.utilities.client.ScriptingHandshake;
 import com.aureliatransit.utilities.client.MtrBridge;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -45,7 +46,7 @@ public final class AtuToolsScreen extends Screen {
 	@Override
 	protected void init() {
 		final int top = 44;
-		final int rowsThatFit = Math.max(1, (height - 60 - top) / ROW);
+		final int rowsThatFit = Math.max(1, (height - 84 - top) / ROW);
 		final int columns = TOOLS.size() <= rowsThatFit ? 1 : 2;
 		final int buttonWidth = columns == 1 ? BUTTON_WIDTH : Math.min(BUTTON_WIDTH, (width - 24) / 2);
 		final int rows = (TOOLS.size() + columns - 1) / columns;
@@ -63,9 +64,18 @@ public final class AtuToolsScreen extends Screen {
 		final ButtonWidget announcer = addDrawableChild(ButtonWidget.builder(announcerLabel(), b -> {
 			Announcer.setEnabled(!Announcer.enabled());
 			b.setMessage(announcerLabel());
-		}).dimensions((width - BUTTON_WIDTH) / 2, height - 52, BUTTON_WIDTH, 20).build());
+		}).dimensions((width - BUTTON_WIDTH) / 2, height - 76, BUTTON_WIDTH, 20).build());
 		announcer.setTooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.tools.announcer.tooltip")));
+		final ButtonWidget melodies = addDrawableChild(ButtonWidget.builder(melodiesLabel(), b -> {
+			ScriptingHandshake.setMelodies(!ScriptingHandshake.melodiesEnabled());
+			b.setMessage(melodiesLabel());
+		}).dimensions((width - BUTTON_WIDTH) / 2, height - 52, BUTTON_WIDTH, 20).build());
+		melodies.setTooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.tools.melodies.tooltip")));
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions((width - BUTTON_WIDTH) / 2, height - 28, BUTTON_WIDTH, 20).build());
+	}
+
+	private static Text melodiesLabel() {
+		return Text.translatable("gui.aurelia_transit_utilities.tools.melodies", ScreenTexts.onOrOff(ScriptingHandshake.melodiesEnabled()));
 	}
 
 	private static Text announcerLabel() {

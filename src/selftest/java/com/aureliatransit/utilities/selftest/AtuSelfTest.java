@@ -57,6 +57,7 @@ public final class AtuSelfTest implements ClientModInitializer {
 		StationCodesSelfTest.addSteps(this);
 		DepartureSelfTest.addSteps(this);
 		JumpSelfTest.addSteps(this);
+		HandshakeSelfTest.addSteps(this);
 		AnnouncerSelfTest.addSteps(this);
 		ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
