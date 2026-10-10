@@ -86,3 +86,11 @@
 - JCM 2.2.5 (mod id `jsblock`) from bytecode: the script global `Resources` is `ScriptResourceUtil`; `Resources.getAddonVersion(id)` reads `MTRScriptingAPI.addonVersionMap` (private, never cleared), which only holds addons that call `MTRScriptingAPI.registerAddonVersion(id, version)` themselves.
 - `client/ScriptingHandshake`: when `jsblock` is loaded, registers `aurelia_transit_utilities` = mod version and `aurelia_transit_utilities:announcer` = `on` / `off` by reflection (no JCM dependency); re-published when the Announcer is switched. AureliaEX `onboard.js` leaves next station / last stop to ATU while it reads `on`, keeps its door warning, and shows `aureliaex atu` in JCM's Script Debug Overlay.
 - `mod_version` 1.1.0. Full self-test 73/73 PASS (52 earlier checks + 21 announcer), 74 unit tests. The dev run has no JCM, so the handshake itself is only provable in Noriega (debug overlay line).
+
+## 2026-10-10 — announcements in chat, replacing MTR's
+
+- User feedback from Noriega: no on-screen caption, text only in chat, and ATU should replace MTR's own announcement.
+- Removed the `HudRenderCallback` caption. Each announcement line goes to the local chat (`ClientPlayerEntity.sendMessage(text, false)`, never sent to the server).
+- MTR prints its chat announcement from `IDrawing.narrateOrAnnounce` when `Config.getClient().getChatAnnouncements()` is on. While the player rides with the Announcer on, ATU switches that off with MTR's public `toggleChatAnnouncements()` (memory only; MTR writes `mtr.json` only from its settings screen) and switches it back when the ride ends (after the 2 s grace), the Announcer is turned off, the player leaves the world, or the client stops.
+- Self-test: new checks "MTR chat announcements off while riding" and "MTR chat announcements restored after the ride".
+- Announcer self-test 23/23 PASS (MTR setting true → off while riding → true after). Screenshot: ATU's lines in chat, no MTR "下一站" line, no caption. 74 unit tests pass. Full suite not re-run (only the Announcer changed).

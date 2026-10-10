@@ -3,19 +3,18 @@ package com.aureliatransit.utilities.client;
 import com.aureliatransit.utilities.announce.Announcement;
 import com.aureliatransit.utilities.announce.AnnouncerLogic;
 import com.aureliatransit.utilities.announce.RideSnapshot;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
+import org.mtr.mod.config.Client;
+import org.mtr.mod.config.Config;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -24,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -32,8 +30,9 @@ import java.util.Properties;
  * Station announcements on the MTR train the player rides: "next station" after departure, "arriving" before the
  * platform, "change here for" other routes and the last stop. Clips are {@code mtr:aureliaex_ann_<key>} sound events
  * from a resource pack (the AureliaEX pack ships them); a missing station clip falls back to {@code chime}, and without
- * any clips the announcement is text only. The text is drawn as a caption above the action bar: MTR rewrites the action
- * bar every tick while the player rides, and may already print its own announcement to chat.
+ * any clips the announcement is text only. The text goes to chat, in place of MTR's own chat announcement: while the
+ * player rides with the Announcer on, MTR's "chat announcements" setting is switched off in memory (MTR only writes its
+ * config from its own settings screen) and switched back when the ride ends, the Announcer is turned off or the game closes.
  */
 public final class Announcer {
 
@@ -44,7 +43,6 @@ public final class Announcer {
 	private static final int LEFT_AFTER_CHECKS = 10;
 	/** A sound reports "not playing" until the sound system has started it. */
 	private static final int START_GRACE_TICKS = 10;
-	private static final int TEXT_MIN_TICKS = 100;
 
 	private static final AnnouncerLogic LOGIC = new AnnouncerLogic();
 	private static final ArrayDeque<String> CLIPS = new ArrayDeque<>();
@@ -55,8 +53,8 @@ public final class Announcer {
 	private static int missedChecks;
 	private static SoundInstance playing;
 	private static int playingTicks;
-	private static List<String> text;
-	private static int textTicks;
+	/** MTR's chat announcements were on and the Announcer switched them off for this ride. */
+	private static boolean mtrChatMuted;
 	private static boolean warnedNoClips;
 
 	private Announcer() {
@@ -66,7 +64,7 @@ public final class Announcer {
 		load();
 		ScriptingHandshake.publish(enabled);
 		ClientTickEvents.END_CLIENT_TICK.register(Announcer::tick);
-		HudRenderCallback.EVENT.register(Announcer::render);
+		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> restoreMtrChat());
 	}
 
 	public static boolean enabled() {
@@ -76,6 +74,9 @@ public final class Announcer {
 	public static void setEnabled(boolean value) {
 		enabled = value;
 		save();
+		if (!enabled) {
+			restoreMtrChat();
+		}
 		ScriptingHandshake.publish(enabled);
 	}
 
@@ -98,6 +99,7 @@ public final class Announcer {
 			missedChecks = LEFT_AFTER_CHECKS;
 			LOGIC.reset();
 			stop(client);
+			restoreMtrChat();
 			return;
 		}
 		final RideSnapshot ride = MtrBridge.ridingSnapshot();
@@ -105,12 +107,14 @@ public final class Announcer {
 			if (++missedChecks >= LEFT_AFTER_CHECKS) {
 				LOGIC.reset();
 				stop(client);
+				restoreMtrChat();
 			} else {
 				pump(client);
 			}
 			return;
 		}
 		missedChecks = 0;
+		muteMtrChat();
 		final Announcement announcement = LOGIC.update(ride, Util.getMeasuringTimeMs(), key -> hasClip(client, key));
 		if (announcement != null) {
 			start(client, announcement);
@@ -121,17 +125,16 @@ public final class Announcer {
 	private static void start(MinecraftClient client, Announcement announcement) {
 		stop(client);
 		CLIPS.addAll(announcement.clips());
-		text = announcement.lines();
-		textTicks = 0;
+		// local chat only (nothing is sent to the server), like MTR's own announcement
+		announcement.lines().forEach(line -> client.player.sendMessage(Text.literal(line), false));
 		remember(announcement.kind() + " " + announcement.lines() + " " + announcement.clips());
 	}
 
-	/** Plays the queued clips one after another and keeps the text on screen while they play. */
+	/** Plays the queued clips one after another. */
 	private static void pump(MinecraftClient client) {
 		if (playing != null) {
 			playingTicks += CHECK_EVERY_TICKS;
 			if (playingTicks < START_GRACE_TICKS || client.getSoundManager().isPlaying(playing)) {
-				holdText();
 				return;
 			}
 			playing = null;
@@ -152,37 +155,32 @@ public final class Announcer {
 			remember("play " + id);
 			break;
 		}
-		if (playing != null || textTicks < TEXT_MIN_TICKS) {
-			holdText();
-		} else {
-			text = null;
+	}
+
+	private static void muteMtrChat() {
+		try {
+			final Client mtr = Config.getClient();
+			if (!mtrChatMuted && mtr.getChatAnnouncements()) {
+				mtr.toggleChatAnnouncements();
+				mtrChatMuted = true;
+			}
+		} catch (RuntimeException | LinkageError e) {
+			AureliaTransitUtilitiesClient.LOGGER.warn("[ATU] Announcer: could not switch MTR's chat announcements off", e);
 		}
 	}
 
-	private static void holdText() {
-		if (text != null) {
-			textTicks += CHECK_EVERY_TICKS;
-		}
-	}
-
-	/** One caption line per announcement line, centred just above the action bar. */
-	private static void render(DrawContext context, float tickDelta) {
-		final List<String> lines = text;
-		final MinecraftClient client = MinecraftClient.getInstance();
-		if (lines == null || client.options.hudHidden) {
+	private static void restoreMtrChat() {
+		if (!mtrChatMuted) {
 			return;
 		}
-		final TextRenderer textRenderer = client.textRenderer;
-		final int centre = context.getScaledWindowWidth() / 2;
-		final int maxWidth = Math.min(context.getScaledWindowWidth() - 20, 360);
-		final List<OrderedText> wrapped = new ArrayList<>();
-		lines.forEach(line -> wrapped.addAll(textRenderer.wrapLines(Text.literal(line), maxWidth)));
-		int y = context.getScaledWindowHeight() - 84 - 11 * wrapped.size();
-		for (final OrderedText line : wrapped) {
-			final int width = textRenderer.getWidth(line);
-			context.fill(centre - width / 2 - 3, y - 2, centre + width / 2 + 3, y + 9, 0x90000000);
-			context.drawTextWithShadow(textRenderer, line, centre - width / 2, y, 0xFFFFFF);
-			y += 11;
+		mtrChatMuted = false;
+		try {
+			final Client mtr = Config.getClient();
+			if (!mtr.getChatAnnouncements()) {
+				mtr.toggleChatAnnouncements();
+			}
+		} catch (RuntimeException | LinkageError e) {
+			AureliaTransitUtilitiesClient.LOGGER.warn("[ATU] Announcer: could not switch MTR's chat announcements back on", e);
 		}
 	}
 
@@ -192,7 +190,6 @@ public final class Announcer {
 			client.getSoundManager().stop(playing);
 			playing = null;
 		}
-		text = null;
 	}
 
 	private static boolean hasClip(MinecraftClient client, String key) {

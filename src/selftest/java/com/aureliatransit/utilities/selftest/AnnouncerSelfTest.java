@@ -11,6 +11,7 @@ import net.minecraft.util.math.Vec3d;
 import org.mtr.core.data.Depot;
 import org.mtr.core.tool.Vector;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.mod.config.Config;
 import org.mtr.mod.client.MinecraftClientData;
 import org.mtr.mod.data.VehicleExtension;
 
@@ -42,6 +43,8 @@ final class AnnouncerSelfTest {
 	private static int notRidingTicks;
 	private static boolean changed;
 	private static int depotTicks;
+	private static boolean mtrChatBefore;
+	private static boolean mtrChatMutedWhileRiding;
 	private static String legKey = "";
 
 	private AnnouncerSelfTest() {
@@ -72,6 +75,7 @@ final class AnnouncerSelfTest {
 			MinecraftClient.getInstance().setScreen(null);
 		});
 		test.act("hold a driver key", () -> {
+			mtrChatBefore = Config.getClient().getChatAnnouncements();
 			final MinecraftClient client = MinecraftClient.getInstance();
 			client.player.networkHandler.sendCommand("item replace entity @s hotbar.8 with mtr:creative_driver_key");
 			client.player.getInventory().selectedSlot = 8;
@@ -112,7 +116,7 @@ final class AnnouncerSelfTest {
 			final List<String> history = Announcer.historyForTest();
 			if (history.size() > lastHistorySize) {
 				lastHistorySize = history.size();
-				// A second later, so the caption has been drawn into the frame.
+				// A second later, so the chat lines are in the frame.
 				shotIn = 20;
 			}
 			if (shotIn > 0 && --shotIn == 0 && shots < 6) {
@@ -123,6 +127,7 @@ final class AnnouncerSelfTest {
 			final RideSnapshot ride = MtrBridge.ridingSnapshot();
 			notRidingTicks = ride == null ? notRidingTicks + 1 : 0;
 			if (ride != null) {
+				mtrChatMutedWhileRiding |= !Config.getClient().getChatAnnouncements();
 				logLegChange(ride);
 				final boolean inDepot = ride.nextStation().isEmpty() && ride.speedMetresPerSecond() < 0.1;
 				depotTicks = inDepot && history.stream().anyMatch(entry -> entry.startsWith("NEXT")) ? depotTicks + 1 : 0;
@@ -147,6 +152,8 @@ final class AnnouncerSelfTest {
 				test.check("terminus clip played", history.contains("play mtr:aureliaex_ann_terminus"), "");
 			}
 			test.check("no announcement repeated back to back", noRepeats(history), "");
+			// The Announcer's lines go to chat instead of MTR's own chat announcement.
+			test.check("MTR chat announcements off while riding", !mtrChatBefore || mtrChatMutedWhileRiding, "MTR setting was " + mtrChatBefore);
 		});
 		test.openDashboard();
 		test.act("restore the depot", () -> {
@@ -165,6 +172,9 @@ final class AnnouncerSelfTest {
 			test.check("depot schedule restored", ok, "");
 			MinecraftClient.getInstance().setScreen(null);
 		});
+		// Off the train for longer than the Announcer's 2 s grace: MTR's setting is back as it was.
+		test.pause(60);
+		test.act("MTR chat setting restored", () -> test.check("MTR chat announcements restored after the ride", Config.getClient().getChatAnnouncements() == mtrChatBefore, "now " + Config.getClient().getChatAnnouncements()));
 	}
 
 	/** MTR's raw fields at each leg change, next to the last stop derived from MTR's simplified route list. */
