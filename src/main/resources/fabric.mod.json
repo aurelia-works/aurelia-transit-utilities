@@ -3,7 +3,7 @@
 	"id": "aurelia_transit_utilities",
 	"version": "${version}",
 	"name": "Aurelia Transit Utilities",
-	"description": "Quality-of-life tools for Minecraft Transit Railway: train presets for sidings, drag-and-drop route stop ordering, bulk platform dwell times and a station-overlap resolver. Client-side, no new blocks.",
+	"description": "Quality-of-life tools for Minecraft Transit Railway: train presets for sidings, drag-and-drop route stop ordering, bulk platform dwell times and a station-overlap resolver, plus an Announcer for the MTR train you ride and settings published to Joban Client Mod vehicle scripts. Client-side, no new blocks.",
 	"authors": [
 		"Aurelia Transit Utilities contributors"
 	],

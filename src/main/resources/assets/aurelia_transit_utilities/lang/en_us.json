@@ -173,7 +173,7 @@
 	"gui.aurelia_transit_utilities.jump.none": "Nothing to jump to. Open this from the MTR dashboard.",
 	"gui.aurelia_transit_utilities.jump.no_permission": "Jumping uses /tp: you need operator rights or cheats on.",
 	"gui.aurelia_transit_utilities.tools.melodies": "Vehicle melodies: %s",
-	"gui.aurelia_transit_utilities.tools.melodies.tooltip": "Tells vehicle scripts (AureliaEX trains via Joban Client Mod) whether to play their departure melodies. Takes effect on the next melody; scripts that do not read this setting ignore it.",
+	"gui.aurelia_transit_utilities.tools.melodies.tooltip": "Tells Joban Client Mod vehicle scripts whether to play departure melodies. Scripts that do not read this setting ignore it.",
 	"gui.aurelia_transit_utilities.tools.announcer": "Announcer: %s",
-	"gui.aurelia_transit_utilities.tools.announcer.tooltip": "Announces the next station, arrivals, changes and the last stop on MTR trains you ride. Plays AureliaEX station clips when a pack has them, otherwise a chime. Text appears above the hotbar."
+	"gui.aurelia_transit_utilities.tools.announcer.tooltip": "Announces the next station, arrivals, changes and the last stop on MTR trains you ride. The lines go to chat and replace MTR's own chat announcement while you ride. Plays station clips (sound events mtr:aureliaex_ann_<key>) from a resource pack that provides them; without them it is text only."
 }

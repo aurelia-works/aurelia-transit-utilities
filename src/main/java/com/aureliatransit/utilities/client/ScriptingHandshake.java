@@ -72,7 +72,7 @@ public final class ScriptingHandshake {
 			}
 		} catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
 			failed = true;
-			AureliaTransitUtilitiesClient.LOGGER.warn("[ATU] Could not register with Joban Client Mod's scripting; AureliaEX trains may announce twice", e);
+			AureliaTransitUtilitiesClient.LOGGER.warn("[ATU] Could not register with Joban Client Mod's scripting; vehicle scripts will not see ATU settings", e);
 		}
 	}
 

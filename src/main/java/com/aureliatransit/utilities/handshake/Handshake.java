@@ -12,7 +12,7 @@ public final class Handshake {
 
 	public static final String ID = "aurelia_transit_utilities";
 	public static final String PROTOCOL = "2";
-	/** The Announcer speaks English only (text and the AureliaEX clips), so this is the only honest value. */
+	/** The Announcer speaks English only (text and its clips), so this is the only honest value. */
 	public static final String ANNOUNCER_LANG = "en";
 	public static final String CAPS = "announcer,announcer_lang,melodies";
 
