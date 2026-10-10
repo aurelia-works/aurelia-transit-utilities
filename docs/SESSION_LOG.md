@@ -80,3 +80,9 @@
 - Dev setup for the clip checks (gitignored, otherwise they SKIP): copy `AureliaEX_MTR4.zip` into `run/selftest/resourcepacks/`, add `file/AureliaEX_MTR4.zip` to `resourcePacks` in `run/selftest/options.txt`, and set `textToSpeechAnnouncements` false in `run/selftest/config/mtr.json` so MTR's narrator does not talk over it.
 - `AtuSelfTest` harness changed (per-step wait limits, pause-menu guard, `onFinish` cleanups, delayed stop); only the announcer-only path has run since, the full 52-check suite was not re-run.
 - Not seen live: "arriving" (every test leg is shorter than the 20 s gap, so it is suppressed by design; unit-tested only). Not yet in Noriega.
+
+## 2026-10-09 — JCM handshake, version 1.1.0
+
+- JCM 2.2.5 (mod id `jsblock`) from bytecode: the script global `Resources` is `ScriptResourceUtil`; `Resources.getAddonVersion(id)` reads `MTRScriptingAPI.addonVersionMap` (private, never cleared), which only holds addons that call `MTRScriptingAPI.registerAddonVersion(id, version)` themselves.
+- `client/ScriptingHandshake`: when `jsblock` is loaded, registers `aurelia_transit_utilities` = mod version and `aurelia_transit_utilities:announcer` = `on` / `off` by reflection (no JCM dependency); re-published when the Announcer is switched. AureliaEX `onboard.js` leaves next station / last stop to ATU while it reads `on`, keeps its door warning, and shows `aureliaex atu` in JCM's Script Debug Overlay.
+- `mod_version` 1.1.0. Full self-test 73/73 PASS (52 earlier checks + 21 announcer), 74 unit tests. The dev run has no JCM, so the handshake itself is only provable in Noriega (debug overlay line).

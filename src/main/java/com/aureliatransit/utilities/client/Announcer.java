@@ -64,6 +64,7 @@ public final class Announcer {
 
 	public static void register() {
 		load();
+		ScriptingHandshake.publish(enabled);
 		ClientTickEvents.END_CLIENT_TICK.register(Announcer::tick);
 		HudRenderCallback.EVENT.register(Announcer::render);
 	}
@@ -75,6 +76,7 @@ public final class Announcer {
 	public static void setEnabled(boolean value) {
 		enabled = value;
 		save();
+		ScriptingHandshake.publish(enabled);
 	}
 
 	public static List<String> historyForTest() {
