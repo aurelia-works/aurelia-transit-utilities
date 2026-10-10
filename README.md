@@ -16,6 +16,14 @@ ATU is **client-side only**: install it on your client, the server does not need
 | Depot health | Every depot's last generation result and setup problems, worst first, with Regenerate. |
 | Jump to | Teleport to any station, platform, depot or siding (uses `/tp`). |
 
+## Announcer (1.1.0)
+
+While you ride an MTR train, ATU announces the next station, arrivals, "change here for" other routes, route continuation and the last stop. The lines go to your local chat (nothing is sent to the server) and replace MTR's own chat announcement for the ride. If a resource pack provides the sound events `mtr:aureliaex_ann_<key>`, ATU plays them too; without them it is text only. On/off button in the ATU hub; English only.
+
+## Vehicle scripts (1.2.0)
+
+When Joban Client Mod is installed, ATU publishes its settings to JCM vehicle scripts through JCM's `registerAddonVersion`: its version, whether the Announcer is on, and a **Vehicle melodies** on/off preference (ATU hub) that scripts may read to mute departure melodies. Scripts that do not read it are unaffected. Keys and behaviour: `docs/HANDSHAKE.md`.
+
 ## How it works
 
 ATU uses only MTR's public classes. It reads the data MTR already sends to the client when its dashboard opens and saves with the same update packets MTR's own screens use. It has no mixins and changes nothing inside MTR. Editing follows MTR's own permission rule (creative or survival mode); Jump to needs `/tp` rights.
@@ -34,6 +42,8 @@ Java 17, Fabric Loader ≥ 0.15, Fabric API ≥ 0.92, MTR 4.0.5.
 
 ## Docs
 
+- `docs/HANDSHAKE.md`: keys ATU publishes to JCM vehicle scripts.
+- `CHANGELOG.md`: release history.
 - `docs/FEASIBILITY.md`: what an add-on can and cannot reach in MTR 4.0.5, with evidence.
 - `docs/LIVE_TESTING.md`: in-game checklist and the automated self-test.
 - `docs/SESSION_LOG.md`: what was built and how each piece was verified.
