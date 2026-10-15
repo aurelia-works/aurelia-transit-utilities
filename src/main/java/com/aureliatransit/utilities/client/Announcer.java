@@ -2,6 +2,7 @@ package com.aureliatransit.utilities.client;
 
 import com.aureliatransit.utilities.announce.Announcement;
 import com.aureliatransit.utilities.announce.AnnouncerLogic;
+import com.aureliatransit.utilities.announce.PlatformCalls;
 import com.aureliatransit.utilities.announce.RideSnapshot;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -13,6 +14,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
+import org.mtr.core.data.Platform;
 import org.mtr.mod.config.Client;
 import org.mtr.mod.config.Config;
 
@@ -33,6 +35,9 @@ import java.util.Properties;
  * any clips the announcement is text only. The text goes to chat, in place of MTR's own chat announcement: while the
  * player rides with the Announcer on, MTR's "chat announcements" setting is switched off in memory (MTR only writes its
  * config from its own settings screen) and switched back when the ride ends, the Announcer is turned off or the game closes.
+ * <p>
+ * On foot, {@link PlatformCalls} announce the next train of the platform the player stands at ("platform calls", a
+ * separate switch), from MTR's shared arrival cache.
  */
 public final class Announcer {
 
@@ -44,11 +49,17 @@ public final class Announcer {
 	/** A sound reports "not playing" until the sound system has started it. */
 	private static final int START_GRACE_TICKS = 10;
 
+	/** Platform calls are checked once a second, on foot only. */
+	private static final int PLATFORM_CHECK_TICKS = 20;
+	private static final double PLATFORM_RADIUS = 4;
+
 	private static final AnnouncerLogic LOGIC = new AnnouncerLogic();
+	private static final PlatformCalls PLATFORM = new PlatformCalls();
 	private static final ArrayDeque<String> CLIPS = new ArrayDeque<>();
 	/** The last announcements and clips, for the dev self-test. */
 	private static final ArrayDeque<String> HISTORY = new ArrayDeque<>();
 	private static boolean enabled = true;
+	private static boolean platformEnabled = true;
 	private static int ticks;
 	private static int missedChecks;
 	private static SoundInstance playing;
@@ -80,6 +91,18 @@ public final class Announcer {
 		ScriptingHandshake.publish(enabled);
 	}
 
+	public static boolean platformEnabled() {
+		return platformEnabled;
+	}
+
+	public static void setPlatformEnabled(boolean value) {
+		platformEnabled = value;
+		save();
+		if (!platformEnabled) {
+			PLATFORM.reset();
+		}
+	}
+
 	public static List<String> historyForTest() {
 		return List.copyOf(HISTORY);
 	}
@@ -95,31 +118,52 @@ public final class Announcer {
 		if (++ticks % CHECK_EVERY_TICKS != 0) {
 			return;
 		}
-		if (!enabled || client.world == null || client.player == null) {
+		if (client.world == null || client.player == null || !enabled && !platformEnabled) {
 			missedChecks = LEFT_AFTER_CHECKS;
 			LOGIC.reset();
+			PLATFORM.reset();
 			stop(client);
 			restoreMtrChat();
 			return;
 		}
 		final RideSnapshot ride = MtrBridge.ridingSnapshot();
 		if (ride == null) {
-			if (++missedChecks >= LEFT_AFTER_CHECKS) {
+			// The ride is only over after a grace period; then the player may be waiting on a platform.
+			if (missedChecks < LEFT_AFTER_CHECKS && ++missedChecks == LEFT_AFTER_CHECKS) {
 				LOGIC.reset();
 				stop(client);
 				restoreMtrChat();
-			} else {
-				pump(client);
 			}
+			if (missedChecks >= LEFT_AFTER_CHECKS && platformEnabled && ticks % PLATFORM_CHECK_TICKS == 0) {
+				checkPlatform(client);
+			}
+			pump(client);
 			return;
 		}
 		missedChecks = 0;
+		if (!enabled) {
+			restoreMtrChat();
+			pump(client);
+			return;
+		}
 		muteMtrChat();
 		final Announcement announcement = LOGIC.update(ride, Util.getMeasuringTimeMs(), key -> hasClip(client, key));
 		if (announcement != null) {
 			start(client, announcement);
 		}
 		pump(client);
+	}
+
+	/** Platform calls for the platform the player stands at (within {@link #PLATFORM_RADIUS} blocks). */
+	private static void checkPlatform(MinecraftClient client) {
+		final Platform platform = MtrBridge.platformNear(client.player.getX(), client.player.getY(), client.player.getZ(), PLATFORM_RADIUS);
+		if (platform == null) {
+			return;
+		}
+		final Announcement announcement = PLATFORM.update(MtrBridge.platformArrivals(platform), System.currentTimeMillis(), key -> hasClip(client, key));
+		if (announcement != null) {
+			start(client, announcement);
+		}
 	}
 
 	private static void start(MinecraftClient client, Announcement announcement) {
@@ -209,6 +253,7 @@ public final class Announcer {
 			final Properties properties = new Properties();
 			properties.load(reader);
 			enabled = !"false".equals(properties.getProperty("enabled"));
+			platformEnabled = !"false".equals(properties.getProperty("platform"));
 		} catch (IOException e) {
 			AureliaTransitUtilitiesClient.LOGGER.error("[ATU] Could not read {}; the Announcer stays on", file, e);
 		}
@@ -221,6 +266,7 @@ public final class Announcer {
 			try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
 				final Properties properties = new Properties();
 				properties.setProperty("enabled", Boolean.toString(enabled));
+				properties.setProperty("platform", Boolean.toString(platformEnabled));
 				properties.store(writer, "Aurelia Transit Utilities announcer");
 			}
 		} catch (IOException e) {

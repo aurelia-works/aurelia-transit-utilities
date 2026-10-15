@@ -7,8 +7,10 @@ import com.aureliatransit.utilities.preset.PresetLibrary;
 import com.aureliatransit.utilities.preset.TrainPreset;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.mtr.core.data.Position;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /** Save a siding's train as a named preset, or apply a preset to a siding. */
 public final class TrainPresetScreen extends Screen {
@@ -38,7 +41,9 @@ public final class TrainPresetScreen extends Screen {
 	private SimpleListWidget<TrainPreset> presetList;
 	private ButtonWidget saveButton;
 	private ButtonWidget applyButton;
+	private ButtonWidget applyDepotButton;
 	private ButtonWidget deleteButton;
+	private boolean includeSettings = true;
 
 	private Siding selectedSiding;
 	private double selectedSidingTrainLength;
@@ -78,10 +83,18 @@ public final class TrainPresetScreen extends Screen {
 		presetName.setMaxLength(48);
 		presetName.setPlaceholder(Text.translatable("gui.aurelia_transit_utilities.presets.name"));
 		presetName.setChangedListener(text -> updateButtons());
-		saveButton = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.presets.save"), button -> save()).dimensions(rightX, listBottom + 4, half, 20).build());
-		final int thirdWidth = (half - 4) / 2;
+		final int halfWidth = (half - 4) / 2;
+		saveButton = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.presets.save"), button -> save()).dimensions(rightX, listBottom + 4, halfWidth, 20).build());
+		final ButtonWidget settingsButton = addDrawableChild(ButtonWidget.builder(settingsLabel(), button -> {
+			includeSettings = !includeSettings;
+			button.setMessage(settingsLabel());
+		}).dimensions(rightX + halfWidth + 4, listBottom + 4, half - halfWidth - 4, 20).build());
+		settingsButton.setTooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.presets.settings.tooltip")));
+		final int thirdWidth = (half - 8) / 3;
 		applyButton = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.presets.apply"), button -> apply()).dimensions(rightX, listBottom + 28, thirdWidth, 20).build());
-		deleteButton = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.presets.delete"), button -> delete()).dimensions(rightX + thirdWidth + 4, listBottom + 28, half - thirdWidth - 4, 20).build());
+		applyDepotButton = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.presets.apply_depot"), button -> applyToDepot()).dimensions(rightX + thirdWidth + 4, listBottom + 28, thirdWidth, 20).build());
+		applyDepotButton.setTooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.presets.apply_depot.tooltip")));
+		deleteButton = addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.presets.delete"), button -> delete()).dimensions(rightX + (thirdWidth + 4) * 2, listBottom + 28, half - (thirdWidth + 4) * 2, 20).build());
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions(width / 2 - 75, height - 26, 150, 20).build());
 
 		if (selectedSiding == null) {
@@ -92,6 +105,10 @@ public final class TrainPresetScreen extends Screen {
 		if (PresetStore.lastError() != null) {
 			setStatus(Text.literal(PresetStore.lastError()), COLOR_ERROR);
 		}
+	}
+
+	private Text settingsLabel() {
+		return Text.translatable("gui.aurelia_transit_utilities.presets.settings", ScreenTexts.onOrOff(includeSettings));
 	}
 
 	private Siding findNearbySiding() {
@@ -135,7 +152,8 @@ public final class TrainPresetScreen extends Screen {
 		if (selectedSiding != null) {
 			for (final TrainPreset preset : PresetStore.library().forMode(selectedSiding.getTransportMode().name())) {
 				final boolean fits = preset.totalLength() <= selectedSiding.getRailLength() + 1e-6;
-				items.add(new SimpleListWidget.Item<>(Text.translatable("gui.aurelia_transit_utilities.presets.entry", preset.name(), preset.cars().size(), formatLength(preset.totalLength())), fits ? COLOR_TEXT : COLOR_DIM, preset));
+				final Text label = Text.translatable("gui.aurelia_transit_utilities.presets.entry", preset.name(), preset.cars().size(), formatLength(preset.totalLength()));
+				items.add(new SimpleListWidget.Item<>(preset.settings() == null ? label : label.copy().append(Text.translatable("gui.aurelia_transit_utilities.presets.with_settings")), fits ? COLOR_TEXT : COLOR_DIM, preset));
 			}
 		}
 		if (selectedPreset != null && items.stream().noneMatch(item -> item.value().equals(selectedPreset))) {
@@ -149,6 +167,7 @@ public final class TrainPresetScreen extends Screen {
 		final boolean canEdit = MtrBridge.canEdit();
 		saveButton.active = selectedSiding != null && !selectedSiding.getVehicleCars().isEmpty() && !presetName.getText().isBlank();
 		applyButton.active = canEdit && selectedSiding != null && selectedPreset != null;
+		applyDepotButton.active = applyButton.active && selectedSiding.area != null;
 		deleteButton.active = selectedPreset != null;
 	}
 
@@ -156,7 +175,8 @@ public final class TrainPresetScreen extends Screen {
 		if (selectedSiding == null) {
 			return;
 		}
-		final TrainPreset preset = MtrBridge.toPreset(presetName.getText(), selectedSiding);
+		final TrainPreset full = MtrBridge.toPreset(presetName.getText(), selectedSiding);
+		final TrainPreset preset = includeSettings ? full : full.withoutSettings();
 		final PresetLibrary.PutResult result = PresetStore.library().put(preset);
 		switch (result) {
 			case ADDED, REPLACED -> {
@@ -183,6 +203,37 @@ public final class TrainPresetScreen extends Screen {
 		}
 		MtrBridge.applyPreset(selectedPreset, selectedSiding);
 		setStatus(Text.translatable("gui.aurelia_transit_utilities.presets.applied", selectedPreset.name(), selectedSiding.getName()), COLOR_OK);
+		refreshSidings();
+		refreshPresets();
+	}
+
+	/** The preset on every siding of the selected siding's depot (same transport mode) that passes the checks. */
+	private void applyToDepot() {
+		if (selectedSiding == null || selectedPreset == null || selectedSiding.area == null || !MtrBridge.canEdit()) {
+			return;
+		}
+		final Set<String> known = MtrBridge.knownVehicleIds(selectedSiding.getTransportMode());
+		final List<Siding> targets = new ArrayList<>();
+		int skipped = 0;
+		Text firstProblem = null;
+		for (final Siding siding : selectedSiding.area.savedRails) {
+			final List<PresetCheck.Problem> problems = PresetCheck.check(selectedPreset, siding.getTransportMode().name(), siding.getRailLength(), known);
+			if (problems.isEmpty()) {
+				targets.add(siding);
+			} else {
+				skipped++;
+				if (firstProblem == null) {
+					firstProblem = Text.literal(siding.getName() + ": ").append(describe(problems.get(0)));
+				}
+			}
+		}
+		if (targets.isEmpty()) {
+			setStatus(firstProblem == null ? Text.translatable("gui.aurelia_transit_utilities.presets.no_sidings") : firstProblem, COLOR_ERROR);
+			return;
+		}
+		MtrBridge.applyPreset(selectedPreset, targets);
+		final Text applied = Text.translatable("gui.aurelia_transit_utilities.presets.applied_depot", selectedPreset.name(), targets.size(), MtrBridge.displayName(selectedSiding.area.getName()));
+		setStatus(skipped == 0 ? applied : applied.copy().append(" ").append(Text.translatable("gui.aurelia_transit_utilities.presets.skipped", skipped)), skipped == 0 ? COLOR_OK : COLOR_ERROR);
 		refreshSidings();
 		refreshPresets();
 	}

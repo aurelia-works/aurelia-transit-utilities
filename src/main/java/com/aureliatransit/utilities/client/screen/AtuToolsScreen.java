@@ -26,12 +26,15 @@ public final class AtuToolsScreen extends Screen {
 	private static final List<Tool> TOOLS = List.of(
 			new Tool("presets", true, TrainPresetScreen::new),
 			new Tool("stops", true, RouteStopsScreen::new),
+			new Tool("return", true, ReturnRouteScreen::new),
 			new Tool("dwell", true, PlatformDwellScreen::new),
 			new Tool("departures", true, DepartureEditorScreen::new),
 			new Tool("overlap", true, StationOverlapScreen::new),
 			new Tool("height", true, ZoneHeightScreen::new),
 			new Tool("codes", true, StationCodesScreen::new),
 			new Tool("depots", false, DepotHealthScreen::new),
+			new Tool("speed", false, SpeedAuditScreen::new),
+			new Tool("trains", false, TrainInspectorScreen::new),
 			// /tp permission is checked by the server; the screen says so when the player lacks it.
 			new Tool("jump", false, JumpScreen::new)
 	);
@@ -46,9 +49,10 @@ public final class AtuToolsScreen extends Screen {
 	@Override
 	protected void init() {
 		final int top = 44;
-		final int rowsThatFit = Math.max(1, (height - 84 - top) / ROW);
-		final int columns = TOOLS.size() <= rowsThatFit ? 1 : 2;
-		final int buttonWidth = columns == 1 ? BUTTON_WIDTH : Math.min(BUTTON_WIDTH, (width - 24) / 2);
+		// Tools above, a row of three player settings and Done below.
+		final int rowsThatFit = Math.max(1, (height - 60 - top) / ROW);
+		final int columns = Math.min(3, (TOOLS.size() + rowsThatFit - 1) / rowsThatFit);
+		final int buttonWidth = columns == 1 ? BUTTON_WIDTH : Math.min(BUTTON_WIDTH, (width - 16 - (columns - 1) * 8) / columns);
 		final int rows = (TOOLS.size() + columns - 1) / columns;
 		final int left = (width - columns * buttonWidth - (columns - 1) * 8) / 2;
 		final boolean canEdit = MtrBridge.canEdit();
@@ -60,18 +64,29 @@ public final class AtuToolsScreen extends Screen {
 					.dimensions(left + column * (buttonWidth + 8), top + row * ROW, buttonWidth, 20).build());
 			button.active = canEdit || !tool.needsEdit();
 		}
-		// A player setting, not an edit: always available.
+		// Player settings, not edits: always available.
+		final int settingWidth = Math.min(BUTTON_WIDTH, (width - 16 - 16) / 3);
+		final int settingsLeft = (width - settingWidth * 3 - 16) / 2;
 		final ButtonWidget announcer = addDrawableChild(ButtonWidget.builder(announcerLabel(), b -> {
 			Announcer.setEnabled(!Announcer.enabled());
 			b.setMessage(announcerLabel());
-		}).dimensions((width - BUTTON_WIDTH) / 2, height - 76, BUTTON_WIDTH, 20).build());
+		}).dimensions(settingsLeft, height - 52, settingWidth, 20).build());
 		announcer.setTooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.tools.announcer.tooltip")));
+		final ButtonWidget platform = addDrawableChild(ButtonWidget.builder(platformLabel(), b -> {
+			Announcer.setPlatformEnabled(!Announcer.platformEnabled());
+			b.setMessage(platformLabel());
+		}).dimensions(settingsLeft + settingWidth + 8, height - 52, settingWidth, 20).build());
+		platform.setTooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.tools.platform.tooltip")));
 		final ButtonWidget melodies = addDrawableChild(ButtonWidget.builder(melodiesLabel(), b -> {
 			ScriptingHandshake.setMelodies(!ScriptingHandshake.melodiesEnabled());
 			b.setMessage(melodiesLabel());
-		}).dimensions((width - BUTTON_WIDTH) / 2, height - 52, BUTTON_WIDTH, 20).build());
+		}).dimensions(settingsLeft + (settingWidth + 8) * 2, height - 52, settingWidth, 20).build());
 		melodies.setTooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.tools.melodies.tooltip")));
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions((width - BUTTON_WIDTH) / 2, height - 28, BUTTON_WIDTH, 20).build());
+	}
+
+	private static Text platformLabel() {
+		return Text.translatable("gui.aurelia_transit_utilities.tools.platform", ScreenTexts.onOrOff(Announcer.platformEnabled()));
 	}
 
 	private static Text melodiesLabel() {

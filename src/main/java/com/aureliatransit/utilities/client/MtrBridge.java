@@ -1,5 +1,6 @@
 package com.aureliatransit.utilities.client;
 
+import com.aureliatransit.utilities.announce.PlatformCalls;
 import com.aureliatransit.utilities.announce.RideSnapshot;
 import com.aureliatransit.utilities.depot.DepotHealth;
 import com.aureliatransit.utilities.overlap.Box;
@@ -8,13 +9,19 @@ import com.aureliatransit.utilities.overlap.OverlapResolver;
 import com.aureliatransit.utilities.overlap.Point;
 import com.aureliatransit.utilities.overlap.Zones;
 import com.aureliatransit.utilities.preset.PresetCar;
+import com.aureliatransit.utilities.preset.SidingSettings;
 import com.aureliatransit.utilities.preset.TrainPreset;
+import com.aureliatransit.utilities.route.ReturnRoute;
+import com.aureliatransit.utilities.speed.SpeedAudit;
+import net.minecraft.text.Text;
 import com.aureliatransit.utilities.timetable.Timetable;
 import org.mtr.core.data.AreaBase;
 import org.mtr.core.data.Depot;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Position;
+import org.mtr.core.data.Rail;
 import org.mtr.core.data.Route;
+import org.mtr.core.data.RoutePlatformData;
 import org.mtr.core.data.SavedRailBase;
 import org.mtr.core.data.SimplifiedRoute;
 import org.mtr.core.data.Siding;
@@ -22,22 +29,28 @@ import org.mtr.core.data.Station;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.data.VehicleCar;
 import org.mtr.core.data.VehicleExtraData;
+import org.mtr.core.operation.ArrivalResponse;
 import org.mtr.core.operation.DepotOperationByIds;
 import org.mtr.core.operation.UpdateDataRequest;
 import org.mtr.core.tool.Vector;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.mod.InitClient;
 import org.mtr.mod.client.CustomResourceLoader;
 import org.mtr.mod.client.MinecraftClientData;
 import org.mtr.mod.client.VehicleRidingMovement;
+import org.mtr.mod.data.ArrivalsCacheClient;
 import org.mtr.mod.data.VehicleExtension;
 import org.mtr.mod.packet.PacketDepotGenerate;
 import org.mtr.mod.packet.PacketUpdateData;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Consumer;
@@ -80,15 +93,99 @@ public final class MtrBridge {
 			final double couplingPadding2 = car.getTotalLength(true, false) - car.getLength();
 			cars.add(new PresetCar(car.getVehicleId(), car.getLength(), car.getWidth(), car.getBogie1Position(), car.getBogie2Position(), couplingPadding1, couplingPadding2));
 		});
-		return new TrainPreset(name, siding.getTransportMode().name(), cars);
+		return new TrainPreset(name, siding.getTransportMode().name(), cars, settingsOf(siding));
 	}
 
-	/** Caller has already run {@code PresetCheck}. */
+	public static SidingSettings settingsOf(Siding siding) {
+		return new SidingSettings(siding.getAcceleration(), siding.getDeceleration(), siding.getIsUnlimited() ? 0 : (int) siding.getMaxVehicles(), siding.getIsManual(),
+				siding.getMaxManualSpeed(), siding.getManualToAutomaticTime(), siding.getDelayedVehicleSpeedIncreasePercentage(), siding.getDelayedVehicleReduceDwellTimePercentage(),
+				siding.getEarlyVehicleIncreaseDwellTime());
+	}
+
+	/** Caller has already run {@code PresetCheck}. Settings are applied too when the preset has them. */
 	public static void applyPreset(TrainPreset preset, Siding siding) {
-		final ObjectArrayList<VehicleCar> cars = new ObjectArrayList<>();
-		preset.cars().forEach(car -> cars.add(new VehicleCar(car.vehicleId(), car.length(), car.width(), car.bogie1Position(), car.bogie2Position(), car.couplingPadding1(), car.couplingPadding2())));
-		siding.setVehicleCars(cars);
-		send(request -> request.addSiding(siding));
+		applyPreset(preset, List.of(siding));
+	}
+
+	/** One update for several sidings (e.g. a whole depot). Caller has already run {@code PresetCheck} on each. */
+	public static void applyPreset(TrainPreset preset, List<Siding> sidings) {
+		sidings.forEach(siding -> {
+			final ObjectArrayList<VehicleCar> cars = new ObjectArrayList<>();
+			preset.cars().forEach(car -> cars.add(new VehicleCar(car.vehicleId(), car.length(), car.width(), car.bogie1Position(), car.bogie2Position(), car.couplingPadding1(), car.couplingPadding2())));
+			siding.setVehicleCars(cars);
+			if (preset.settings() != null) {
+				applySettings(preset.settings(), siding);
+			}
+		});
+		send(request -> sidings.forEach(request::addSiding));
+	}
+
+	/** Same order of setters as MTR's {@code SidingScreen.onClose2}. */
+	private static void applySettings(SidingSettings settings, Siding siding) {
+		if (settings.manual()) {
+			siding.setIsManual(true);
+		} else if (settings.unlimited()) {
+			siding.setUnlimitedVehicles(true);
+		} else {
+			siding.setMaxVehicles(settings.maxVehicles());
+		}
+		siding.setAcceleration(settings.acceleration());
+		siding.setDeceleration(settings.deceleration());
+		siding.setDelayedVehicleSpeedIncreasePercentage(settings.delayedSpeedIncreasePercentage());
+		siding.setDelayedVehicleReduceDwellTimePercentage(settings.delayedReduceDwellTimePercentage());
+		siding.setEarlyVehicleIncreaseDwellTime(settings.earlyIncreaseDwellTime());
+		siding.setMaxManualSpeed(settings.maxManualSpeed());
+		siding.setManualToAutomaticTime(settings.manualToAutomaticTime());
+	}
+
+	/** The return-route plan for a route, or null when one of its stops is a deleted platform. */
+	public static List<ReturnRoute.Choice> returnRoutePlan(Route route) {
+		final List<ReturnRoute.Stop> stops = new ArrayList<>();
+		for (final RoutePlatformData data : route.getRoutePlatforms()) {
+			if (data.platform == null) {
+				return null;
+			}
+			stops.add(stop(data.platform));
+		}
+		final Map<Long, List<ReturnRoute.Stop>> byStation = new HashMap<>();
+		dashboardData().platforms.forEach(platform -> {
+			if (platform.area != null && platform.isTransportMode(route.getTransportMode())) {
+				byStation.computeIfAbsent(platform.area.getId(), id -> new ArrayList<>()).add(stop(platform));
+			}
+		});
+		return ReturnRoute.plan(stops, byStation, route.getCircularState() != Route.CircularState.NONE);
+	}
+
+	private static ReturnRoute.Stop stop(Platform platform) {
+		final Position mid = platform.getMidPosition();
+		return new ReturnRoute.Stop(platform.getId(), platform.area == null ? 0 : platform.area.getId(), mid.getX(), mid.getZ());
+	}
+
+	/**
+	 * Creates the return route: same colour, number, type and visibility, the given platforms in order, the opposite
+	 * circular direction. With {@code addToDepots} it also joins every depot of the original route (they need
+	 * regenerating before trains run it, like any depot edit in MTR). Caller checked {@link #canEdit()}.
+	 */
+	public static Route createReturnRoute(Route original, String name, List<Long> platformIds, boolean addToDepots) {
+		final Route route = new Route(original.getTransportMode(), dashboardData());
+		route.setName(name);
+		route.setColor(original.getColor());
+		route.setRouteNumber(original.getRouteNumber());
+		route.setRouteType(original.getRouteType());
+		route.setHidden(original.getHidden());
+		route.setCircularState(switch (original.getCircularState()) {
+			case CLOCKWISE -> Route.CircularState.ANTICLOCKWISE;
+			case ANTICLOCKWISE -> Route.CircularState.CLOCKWISE;
+			default -> Route.CircularState.NONE;
+		});
+		platformIds.forEach(id -> route.getRoutePlatforms().add(new RoutePlatformData(id)));
+		final List<Depot> depots = addToDepots ? new ArrayList<>(original.depots) : List.of();
+		depots.forEach(depot -> depot.getRouteIds().add(route.getId()));
+		send(request -> {
+			request.addRoute(route);
+			depots.forEach(request::addDepot);
+		});
+		return route;
 	}
 
 	/** Same request as the Generate button in MTR's depot screen. Only ever sent on an explicit click. */
@@ -190,7 +287,82 @@ public final class MtrBridge {
 		}, count -> failed[2] = count);
 		final int sidingsWithoutTrain = (int) depot.savedRails.stream().filter(siding -> siding.getVehicleCars().isEmpty()).count();
 		final Depot.GeneratedStatus status = depot.getLastGeneratedStatus();
-		return new DepotHealth.DepotInfo(depot.getId(), displayName(depot.getName()), DepotHealth.status(status == null ? null : status.name()), failed[0], failed[1], failed[2], depot.routes.size(), depot.savedRails.size(), sidingsWithoutTrain, tooShort, deletedPlatforms);
+		final List<String> withoutStation = new ArrayList<>();
+		depot.routes.forEach(route -> route.getRoutePlatforms().forEach(data -> {
+			if (data.platform != null && data.platform.area == null) {
+				final String label = Text.translatable("gui.aurelia_transit_utilities.depots.platform_on_route", data.platform.getName(), displayName(route.getName())).getString();
+				if (!withoutStation.contains(label)) {
+					withoutStation.add(label);
+				}
+			}
+		}));
+		final List<String> isolated = new ArrayList<>();
+		depot.savedRails.forEach(siding -> {
+			if (sidingTrackLinked(siding) == Boolean.FALSE) {
+				isolated.add(siding.getName());
+			}
+		});
+		return new DepotHealth.DepotInfo(depot.getId(), displayName(depot.getName()), DepotHealth.status(status == null ? null : status.name()), failed[0], failed[1], failed[2], depot.routes.size(), depot.savedRails.size(), sidingsWithoutTrain, tooShort, deletedPlatforms,
+				hasNoDepartures(depot), withoutStation, isolated);
+	}
+
+	/** MTR builds no departures from an empty timed list, or from trains-per-hour all at zero. */
+	public static boolean hasNoDepartures(Depot depot) {
+		if (depot.getTransportMode().continuousMovement) {
+			return false;
+		}
+		if (depot.getUseRealTime()) {
+			return depot.getRealTimeDepartures().isEmpty();
+		}
+		for (int hour = 0; hour < 24; hour++) {
+			if (depot.getFrequency(hour) > 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Whether any other rail meets the siding's rail at either end, from the rails MTR has sent to this client (those
+	 * within render distance). Null when the siding's rail is not loaded here, so nothing can be said.
+	 */
+	public static Boolean sidingTrackLinked(Siding siding) {
+		final MinecraftClientData live = MinecraftClientData.getInstance();
+		final Position end1 = siding.getRandomPosition();
+		final Position end2 = siding.getOtherPosition(end1);
+		final Map<Position, Rail> from1 = live.positionsToRail.get(end1);
+		final Map<Position, Rail> from2 = live.positionsToRail.get(end2);
+		if (from1 == null || from2 == null) {
+			return null;
+		}
+		return from1.keySet().stream().anyMatch(position -> !position.equals(end2)) || from2.keySet().stream().anyMatch(position -> !position.equals(end1));
+	}
+
+	/** Every loaded rail (within render distance), for {@link SpeedAudit}. Airplane runways are left out. */
+	public static List<SpeedAudit.Rail> loadedRails() {
+		final MinecraftClientData live = MinecraftClientData.getInstance();
+		final List<SpeedAudit.Rail> rails = new ArrayList<>();
+		final Set<String> seen = new HashSet<>();
+		live.positionsToRail.forEach((start, ends) -> ends.forEach((end, rail) -> {
+			if (rail.getTransportMode() == TransportMode.AIRPLANE || !seen.add(rail.getHexId())) {
+				return;
+			}
+			final var radii = rail.railMath.getHorizontalRadii();
+			final double radius = radii.leftDouble() > 0 && radii.rightDouble() > 0 ? Math.min(radii.leftDouble(), radii.rightDouble()) : Math.max(radii.leftDouble(), radii.rightDouble());
+			final Vector middle = rail.railMath.getPosition(rail.railMath.getLength() / 2, false);
+			rails.add(new SpeedAudit.Rail(rail.getHexId(), nodeKey(start), nodeKey(end), kilometresPerHour(rail.getSpeedLimitMetersPerMillisecond(start)), kilometresPerHour(rail.getSpeedLimitMetersPerMillisecond(end)),
+					radius, rail.isPlatform() || rail.isSiding() || rail.canTurnBack(), rail.getTransportMode() == TransportMode.TRAIN, middle.x, middle.y, middle.z));
+		}));
+		return rails;
+	}
+
+	private static String nodeKey(Position position) {
+		return position.getX() + "," + position.getY() + "," + position.getZ();
+	}
+
+	/** MTR speeds are blocks per millisecond. */
+	private static long kilometresPerHour(double metresPerMillisecond) {
+		return Math.round(metresPerMillisecond * 3600);
 	}
 
 	/** "Platform 2 (Central)" for messages; works for deleted platforms too. */
@@ -279,6 +451,80 @@ public final class MtrBridge {
 			return false;
 		}
 		return route.getPlatforms().get(route.getPlatforms().size() - 1).getPlatformId() == extra.getNextPlatformId();
+	}
+
+	/**
+	 * Every train MTR has sent to this client, the ridden one first, then nearest first. Delays come from MTR's shared
+	 * arrival cache (the one its departure screens use); asking for them adds the trains' next platforms to MTR's next
+	 * arrival request, at most every 3 seconds.
+	 */
+	public static List<TrainView> loadedTrains(double playerX, double playerY, double playerZ) {
+		final MinecraftClientData live = MinecraftClientData.getInstance();
+		final LongArrayList nextPlatforms = new LongArrayList();
+		live.vehicles.forEach(vehicle -> {
+			final long next = vehicle.vehicleExtraData.getNextPlatformId();
+			if (next != 0 && !nextPlatforms.contains(next)) {
+				nextPlatforms.add(next);
+			}
+		});
+		final List<ArrivalResponse> arrivals = nextPlatforms.isEmpty() ? List.of() : ArrivalsCacheClient.INSTANCE.requestArrivals(nextPlatforms);
+		final List<TrainView> trains = new ArrayList<>();
+		for (final VehicleExtension vehicle : live.vehicles) {
+			final VehicleExtraData extra = vehicle.vehicleExtraData;
+			final Vector head = vehicle.getHeadPosition();
+			final double x = head == null ? playerX : head.x;
+			final double y = head == null ? playerY : head.y;
+			final double z = head == null ? playerZ : head.z;
+			Long delay = null;
+			for (final ArrivalResponse arrival : arrivals) {
+				if (arrival.getPlatformId() == extra.getNextPlatformId() && arrival.getRouteId() == extra.getThisRouteId() && arrival.getDepartureIndex() == vehicle.getDepartureIndex()) {
+					delay = arrival.getDeviation() / 1000;
+					break;
+				}
+			}
+			final Depot depot = dashboardData().depotIdMap.get(extra.getDepotId());
+			final Siding siding = dashboardData().sidingIdMap.get(extra.getSidingId());
+			trains.add(new TrainView(vehicle.getId(), VehicleRidingMovement.isRiding(vehicle.getId()), Math.sqrt((x - playerX) * (x - playerX) + (y - playerY) * (y - playerY) + (z - playerZ) * (z - playerZ)),
+					extra.getThisRouteName(), extra.getThisRouteColor(), extra.getThisRouteDestination(), extra.getThisStationName(), extra.getNextStationName(),
+					depot == null ? "" : depot.getName(), siding == null ? "" : siding.getName(), extra.immutableVehicleCars.size(), extra.getTotalVehicleLength(),
+					kilometresPerHour(vehicle.getSpeed()), vehicle.getSpeedLimitKilometersPerHour(), extra.getIsCurrentlyManual(), vehicle.getIsOnRoute(),
+					vehicle.persistentVehicleData.getDoorValue() > 0, delay, x, y, z));
+		}
+		trains.sort(Comparator.comparing((TrainView train) -> !train.riding()).thenComparingDouble(TrainView::distance));
+		return trains;
+	}
+
+	/** The live platform nearest to the player's feet within {@code radius} blocks, or null. */
+	public static Platform platformNear(double x, double y, double z, double radius) {
+		final MinecraftClientData live = MinecraftClientData.getInstance();
+		final Position position = new Position((long) Math.floor(x), (long) Math.floor(y), (long) Math.floor(z));
+		Platform best = null;
+		double bestDistance = Double.MAX_VALUE;
+		for (final Platform platform : live.platforms) {
+			if (platform.closeTo(position, radius)) {
+				final double distance = platform.getApproximateClosestDistance(position, live);
+				if (distance < bestDistance) {
+					bestDistance = distance;
+					best = platform;
+				}
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * Upcoming trains at one platform from MTR's shared arrival cache, with times moved onto this computer's clock
+	 * ({@code System.currentTimeMillis()}), the way MTR's PIDS do it.
+	 */
+	public static List<PlatformCalls.Arrival> platformArrivals(Platform platform) {
+		final long offset = ArrivalsCacheClient.INSTANCE.getMillisOffset();
+		final List<PlatformCalls.Arrival> arrivals = new ArrayList<>();
+		for (final ArrivalResponse arrival : ArrivalsCacheClient.INSTANCE.requestArrivals(LongArrayList.of(platform.getId()))) {
+			final String destination = arrival.getDestination() == null || arrival.getDestination().isBlank() ? "" : arrival.getDestination();
+			arrivals.add(new PlatformCalls.Arrival(arrival.getRouteId() + ":" + arrival.getDepartureIndex() + ":" + arrival.getPlatformId(), arrival.getPlatformName(), arrival.getRouteName(), destination,
+					arrival.getArrival() - offset, arrival.getDeparture() - offset, arrival.getDeviation(), arrival.getIsTerminating(), arrival.getCarCount()));
+		}
+		return arrivals;
 	}
 
 	/** MTR stores alternative-language names separated by '|'. */
