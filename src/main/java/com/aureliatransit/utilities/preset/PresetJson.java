@@ -8,10 +8,13 @@ import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.List;
 
-/** File format: {@code {"version":1,"presets":[{"name":..,"mode":..,"cars":[{..}]}]}}. Bad entries are skipped and counted. */
+/**
+ * File format: {@code {"version":2,"presets":[{"name":..,"mode":..,"cars":[{..}],"settings":{..}}]}}. "settings" is
+ * optional (version 1 files have none). Bad entries are skipped and counted; a bad "settings" object skips the entry.
+ */
 public final class PresetJson {
 
-	public static final int VERSION = 1;
+	public static final int VERSION = 2;
 
 	private PresetJson() {
 	}
@@ -38,6 +41,9 @@ public final class PresetJson {
 				cars.add(carObject);
 			});
 			object.add("cars", cars);
+			if (preset.settings() != null) {
+				object.add("settings", writeSettings(preset.settings()));
+			}
 			presets.add(object);
 		});
 		final JsonObject root = new JsonObject();
@@ -73,7 +79,8 @@ public final class PresetJson {
 							finite(car, "coupling1"), finite(car, "coupling2")
 					));
 				}
-				final PresetLibrary.PutResult result = library.put(new TrainPreset(object.get("name").getAsString(), object.get("mode").getAsString(), cars));
+				final SidingSettings settings = object.has("settings") ? readSettings(object.getAsJsonObject("settings")) : null;
+				final PresetLibrary.PutResult result = library.put(new TrainPreset(object.get("name").getAsString(), object.get("mode").getAsString(), cars, settings));
 				if (result == PresetLibrary.PutResult.ADDED || result == PresetLibrary.PutResult.REPLACED) {
 					loaded++;
 				} else {
@@ -84,6 +91,30 @@ public final class PresetJson {
 			}
 		}
 		return new LoadResult(loaded, skipped);
+	}
+
+	private static JsonObject writeSettings(SidingSettings settings) {
+		final JsonObject object = new JsonObject();
+		object.addProperty("acceleration", settings.acceleration());
+		object.addProperty("deceleration", settings.deceleration());
+		object.addProperty("maxVehicles", settings.maxVehicles());
+		object.addProperty("manual", settings.manual());
+		object.addProperty("maxManualSpeed", settings.maxManualSpeed());
+		object.addProperty("manualToAutomaticTime", settings.manualToAutomaticTime());
+		object.addProperty("delayedSpeedIncrease", settings.delayedSpeedIncreasePercentage());
+		object.addProperty("delayedReduceDwell", settings.delayedReduceDwellTimePercentage());
+		object.addProperty("earlyIncreaseDwell", settings.earlyIncreaseDwellTime());
+		return object;
+	}
+
+	private static SidingSettings readSettings(JsonObject object) {
+		return new SidingSettings(
+				finite(object, "acceleration"), finite(object, "deceleration"),
+				object.get("maxVehicles").getAsInt(), object.get("manual").getAsBoolean(),
+				finite(object, "maxManualSpeed"), object.get("manualToAutomaticTime").getAsInt(),
+				object.get("delayedSpeedIncrease").getAsInt(), object.get("delayedReduceDwell").getAsInt(),
+				object.get("earlyIncreaseDwell").getAsBoolean()
+		);
 	}
 
 	private static double finite(JsonObject object, String key) {

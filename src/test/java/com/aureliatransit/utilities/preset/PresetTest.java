@@ -114,4 +114,36 @@ class PresetTest {
 		assertThrows(IllegalArgumentException.class, () -> PresetJson.read("not json {", library));
 		assertEquals(1, library.size(), "a rejected file must not wipe the library");
 	}
+
+	@Test
+	void settingsRoundTripAndClamp() {
+		final SidingSettings settings = new SidingSettings(1E-6, 3E-6, 4, false, 0.02, 30_000, 50, 25, true);
+		final TrainPreset preset = new TrainPreset("Express", "TRAIN", List.of(car("a", 20)), settings);
+		final PresetLibrary library = new PresetLibrary();
+		library.put(preset);
+		library.put(train("Plain", "TRAIN", car("b", 20)));
+		final PresetLibrary copy = new PresetLibrary();
+		assertEquals(new PresetJson.LoadResult(2, 0), PresetJson.read(PresetJson.write(library), copy));
+		assertEquals(settings, copy.get("express").settings());
+		assertNull(copy.get("plain").settings(), "presets saved without settings stay without");
+		assertNull(preset.withoutSettings().settings());
+
+		final SidingSettings wild = new SidingSettings(1, Double.NaN, -5, true, -3, -1, 400, -2, false);
+		assertEquals(SidingSettings.MAX_ACCELERATION, wild.acceleration());
+		assertEquals(SidingSettings.MIN_ACCELERATION, wild.deceleration());
+		assertTrue(wild.unlimited());
+		assertEquals(0, wild.maxManualSpeed());
+		assertEquals(0, wild.manualToAutomaticTime());
+		assertEquals(100, wild.delayedSpeedIncreasePercentage());
+		assertEquals(0, wild.delayedReduceDwellTimePercentage());
+	}
+
+	@Test
+	void versionOneFilesStillLoad() {
+		final String json = """
+				{"version":1,"presets":[{"name":"old","mode":"TRAIN","cars":[{"id":"a","length":1,"width":1,"bogie1":0,"bogie2":0,"coupling1":0,"coupling2":0}]}]}""";
+		final PresetLibrary library = new PresetLibrary();
+		assertEquals(new PresetJson.LoadResult(1, 0), PresetJson.read(json, library));
+		assertNull(library.get("old").settings());
+	}
 }

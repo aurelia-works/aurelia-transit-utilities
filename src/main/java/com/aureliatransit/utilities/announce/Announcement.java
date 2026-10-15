@@ -8,5 +8,5 @@ import java.util.List;
  */
 public record Announcement(Kind kind, List<String> lines, List<String> clips) {
 
-	public enum Kind {NEXT, ARRIVING}
+	public enum Kind {NEXT, ARRIVING, PLATFORM_APPROACHING, PLATFORM_ARRIVING, PLATFORM_DELAYED}
 }

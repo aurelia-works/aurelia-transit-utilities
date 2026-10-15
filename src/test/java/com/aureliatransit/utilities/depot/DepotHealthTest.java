@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DepotHealthTest {
 
 	private static DepotHealth.DepotInfo depot(String name, DepotHealth.Status status, long start, long end, long failedSidings, int routes, int sidings, int empty, List<String> shortRoutes, List<String> deleted) {
-		return new DepotHealth.DepotInfo(name.hashCode(), name, status, start, end, failedSidings, routes, sidings, empty, shortRoutes, deleted);
+		return new DepotHealth.DepotInfo(name.hashCode(), name, status, start, end, failedSidings, routes, sidings, empty, shortRoutes, deleted, false, List.of(), List.of());
 	}
 
 	private static DepotHealth.DepotInfo healthy(String name) {
@@ -64,5 +64,21 @@ class DepotHealthTest {
 		));
 		depots.sort(DepotHealth.worstFirst());
 		assertEquals(List.of("y error", "z warning", "a healthy", "b healthy"), depots.stream().map(DepotHealth.DepotInfo::name).toList());
+	}
+
+	@Test
+	void doctorChecks() {
+		final DepotHealth.DepotInfo depot = new DepotHealth.DepotInfo(1, "A", DepotHealth.Status.SUCCESSFUL, 0, 0, 0, 1, 2, 0, List.of(), List.of(), true, List.of("Platform 3 (Route 1)"), List.of("Siding 2"));
+		final List<DepotHealth.Problem> problems = DepotHealth.check(depot);
+		assertEquals(List.of("no_departures", "siding_isolated", "platform_no_station"), problems.stream().map(DepotHealth.Problem::key).toList());
+		assertEquals(List.of("Siding 2"), problems.get(1).args());
+		assertEquals(DepotHealth.Severity.WARNING, problems.get(2).severity());
+		assertEquals(0, DepotHealth.rank(problems));
+	}
+
+	@Test
+	void noDeparturesIsNotRepeatedForADepotWithoutRoutes() {
+		final DepotHealth.DepotInfo depot = new DepotHealth.DepotInfo(1, "A", DepotHealth.Status.SUCCESSFUL, 0, 0, 0, 0, 2, 0, List.of(), List.of(), true, List.of(), List.of());
+		assertEquals(List.of("no_routes"), DepotHealth.check(depot).stream().map(DepotHealth.Problem::key).toList());
 	}
 }

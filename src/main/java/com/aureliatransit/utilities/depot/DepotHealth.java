@@ -28,7 +28,10 @@ public final class DepotHealth {
 			int sidingCount,
 			int sidingsWithoutTrain,
 			List<String> routesWithTooFewStops,
-			List<String> routesWithDeletedPlatforms
+			List<String> routesWithDeletedPlatforms,
+			boolean noDepartures,
+			List<String> platformsWithoutStation,
+			List<String> isolatedSidings
 	) {
 	}
 
@@ -69,6 +72,11 @@ public final class DepotHealth {
 		}
 		depot.routesWithTooFewStops().forEach(route -> problems.add(new Problem(Severity.ERROR, "route_too_short", List.of(route))));
 		depot.routesWithDeletedPlatforms().forEach(route -> problems.add(new Problem(Severity.ERROR, "route_deleted_platform", List.of(route))));
+		if (depot.noDepartures() && depot.routeCount() > 0) {
+			problems.add(new Problem(Severity.ERROR, "no_departures", List.of()));
+		}
+		depot.isolatedSidings().forEach(siding -> problems.add(new Problem(Severity.ERROR, "siding_isolated", List.of(siding))));
+		depot.platformsWithoutStation().forEach(platform -> problems.add(new Problem(Severity.WARNING, "platform_no_station", List.of(platform))));
 		return problems;
 	}
 
