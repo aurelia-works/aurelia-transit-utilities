@@ -9,6 +9,7 @@ import net.minecraft.client.gui.widget.ClickableWidget;
 import org.mtr.core.data.Depot;
 import org.mtr.core.data.Siding;
 import org.mtr.core.data.VehicleCar;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
@@ -24,6 +25,7 @@ final class DepotHealthSelfTest {
 	}
 
 	static void addSteps(AtuSelfTest test) {
+		test.onFinish(DepotHealthSelfTest::restoreDepartures);
 		test.openDashboard();
 		test.act("empty a siding's train", () -> {
 			final Siding siding = MtrBridge.dashboardData().sidings.iterator().next();
@@ -61,8 +63,56 @@ final class DepotHealthSelfTest {
 		test.openDashboard();
 		test.act("verify train restored", () -> {
 			test.check("siding train restored", MtrBridge.dashboardData().sidingIdMap.get(sidingId).getVehicleCars().size() == originalCars.size(), "");
+			final Boolean linked = MtrBridge.sidingTrackLinked(MtrBridge.dashboardData().sidingIdMap.get(sidingId));
+			if (linked == null) {
+				test.skip("siding track linked", "siding rail not within render distance");
+			} else {
+				test.check("connected siding is not reported as isolated", linked, "");
+			}
+			// Depot doctor: an empty timed list means no train ever leaves.
+			final Depot depot = MtrBridge.dashboardData().depotIdMap.get(depotId);
+			originalRealTime = depot.getUseRealTime();
+			originalDepartures = new LongArrayList(depot.getRealTimeDepartures());
+			test.check("test depot has departures before", !MtrBridge.hasNoDepartures(depot), "");
+			changedDepartures = true;
+			MtrBridge.saveDepartures(depot, List.of());
+		});
+		test.pause(20);
+		test.act("leave screens", () -> MinecraftClient.getInstance().setScreen(null));
+		openScreen(test);
+		test.act("check no departures is reported, restore", () -> {
+			final DepotHealthScreen screen = (DepotHealthScreen) MinecraftClient.getInstance().currentScreen;
+			final List<DepotHealth.Problem> problems = screen.problemsForTest().get(depotId);
+			test.check("depot without departures reported", problems != null && problems.stream().anyMatch(problem -> problem.key().equals("no_departures")), String.valueOf(problems));
+			screen.selectDepotForTest(depotId);
+		});
+		test.pause(3);
+		test.screenshot("51_depot_doctor");
+		test.act("restore departures", DepotHealthSelfTest::restoreDepartures);
+		test.pause(20);
+		test.act("leave screens", () -> MinecraftClient.getInstance().setScreen(null));
+		test.openDashboard();
+		test.act("verify departures restored", () -> {
+			final Depot depot = MtrBridge.dashboardData().depotIdMap.get(depotId);
+			test.check("depot departures restored", depot.getUseRealTime() == originalRealTime && depot.getRealTimeDepartures().equals(originalDepartures), "");
 			MinecraftClient.getInstance().setScreen(null);
 		});
+	}
+
+	private static boolean originalRealTime;
+	private static LongArrayList originalDepartures;
+	private static boolean changedDepartures;
+
+	private static void restoreDepartures() {
+		if (!changedDepartures) {
+			return;
+		}
+		changedDepartures = false;
+		final Depot depot = MtrBridge.dashboardData().depotIdMap.get(depotId);
+		depot.getRealTimeDepartures().clear();
+		depot.getRealTimeDepartures().addAll(originalDepartures);
+		depot.setUseRealTime(originalRealTime);
+		MtrBridge.send(request -> request.addDepot(depot));
 	}
 
 	private static void openScreen(AtuSelfTest test) {

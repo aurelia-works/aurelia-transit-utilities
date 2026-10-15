@@ -8,6 +8,7 @@ import com.aureliatransit.utilities.preset.PresetCar;
 import com.aureliatransit.utilities.preset.PresetCheck;
 import com.aureliatransit.utilities.preset.PresetJson;
 import com.aureliatransit.utilities.preset.PresetLibrary;
+import com.aureliatransit.utilities.preset.SidingSettings;
 import com.aureliatransit.utilities.preset.TrainPreset;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.MinecraftClient;
@@ -73,7 +74,12 @@ final class PresetSelfTest {
 			}
 
 			final PresetCar first = original.cars().get(0);
-			modified = new TrainPreset("selftest modified", original.transportMode(), original.cars().size() > 1 ? List.of(first) : List.of(first, first));
+			// Different train and different siding settings, so both have to come back from MTR core.
+			final SidingSettings o = original.settings();
+			test.check("preset carries the siding settings", o != null, String.valueOf(o));
+			final SidingSettings changedSettings = new SidingSettings(o.acceleration() == 5E-6 ? 6E-6 : 5E-6, o.deceleration() == 3E-6 ? 7E-6 : 3E-6, o.maxVehicles() == 3 ? 2 : 3, false,
+					o.maxManualSpeed(), o.manualToAutomaticTime(), (o.delayedSpeedIncreasePercentage() + 37) % 100, (o.delayedReduceDwellTimePercentage() + 11) % 100, !o.earlyIncreaseDwellTime());
+			modified = new TrainPreset("selftest modified", original.transportMode(), original.cars().size() > 1 ? List.of(first) : List.of(first, first), changedSettings);
 			final List<PresetCheck.Problem> problems = PresetCheck.check(modified, siding.getTransportMode().name(), siding.getRailLength(), MtrBridge.knownVehicleIds(siding.getTransportMode()));
 			test.check("modified preset passes checks", problems.isEmpty(), problems.toString());
 			final List<PresetCheck.Problem> missing = PresetCheck.check(new TrainPreset("bad", original.transportMode(), List.of(new PresetCar("atu_no_such_vehicle", 10, 3, -3, 3, 0, 0))), siding.getTransportMode().name(), siding.getRailLength(), MtrBridge.knownVehicleIds(siding.getTransportMode()));
@@ -104,6 +110,14 @@ final class PresetSelfTest {
 		}
 		final TrainPreset actual = MtrBridge.toPreset("actual", siding);
 		test.check(name, sameTrain(expected, actual), actual.cars().size() + " cars, expected " + expected.cars().size());
+		test.check(name + " (siding settings)", sameSettings(expected.settings(), actual.settings()), actual.settings() + " expected " + expected.settings());
+	}
+
+	private static boolean sameSettings(SidingSettings a, SidingSettings b) {
+		return a != null && b != null && Math.abs(a.acceleration() - b.acceleration()) < 1E-9 && Math.abs(a.deceleration() - b.deceleration()) < 1E-9
+				&& a.maxVehicles() == b.maxVehicles() && a.manual() == b.manual() && a.delayedSpeedIncreasePercentage() == b.delayedSpeedIncreasePercentage()
+				&& a.delayedReduceDwellTimePercentage() == b.delayedReduceDwellTimePercentage() && a.earlyIncreaseDwellTime() == b.earlyIncreaseDwellTime()
+				&& a.manualToAutomaticTime() == b.manualToAutomaticTime() && Math.abs(a.maxManualSpeed() - b.maxManualSpeed()) < 1E-9;
 	}
 
 	private static boolean sameTrain(TrainPreset a, TrainPreset b) {

@@ -109,6 +109,9 @@ final class AnnouncerSelfTest {
 			MinecraftClient.getInstance().player.getInventory().selectedSlot = 0;
 			final RideSnapshot ride = MtrBridge.ridingSnapshot();
 			test.check("riding an MTR train", ride != null, ride == null ? "" : "next " + ride.nextStation() + ", route " + ride.route() + ", interchanges " + ride.interchanges().size());
+			final var player = MinecraftClient.getInstance().player;
+			final var trains = MtrBridge.loadedTrains(player.getX(), player.getY(), player.getZ());
+			test.check("train inspector lists the ridden train first", !trains.isEmpty() && trains.get(0).riding(), trains.isEmpty() ? "no trains" : trains.get(0).toString());
 			lastHistorySize = Announcer.historyForTest().size();
 		});
 		// Ride until the train leaves service or we are thrown off; screenshot each new announcement.

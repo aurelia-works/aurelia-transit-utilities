@@ -41,8 +41,10 @@ public final class AtuSelfTest implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		// run/selftest/atu_selftest_only.txt containing "announcer" runs only the announcer ride (it takes minutes).
+		// run/selftest/atu_selftest_only.txt containing "announcer" runs only the platform calls and the announcer ride
+		// (they take minutes).
 		if (onlyAnnouncer()) {
+			PlatformCallsSelfTest.addSteps(this);
 			AnnouncerSelfTest.addSteps(this);
 			ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
 			ClientTickEvents.END_CLIENT_TICK.register(this::tick);
@@ -50,14 +52,17 @@ public final class AtuSelfTest implements ClientModInitializer {
 		}
 		PresetSelfTest.addSteps(this);
 		RouteStopsSelfTest.addSteps(this);
+		ReturnRouteSelfTest.addSteps(this);
 		DwellSelfTest.addSteps(this);
 		OverlapSelfTest.addSteps(this);
 		ZoneHeightSelfTest.addSteps(this);
 		DepotHealthSelfTest.addSteps(this);
+		SpeedAuditSelfTest.addSteps(this);
 		StationCodesSelfTest.addSteps(this);
 		DepartureSelfTest.addSteps(this);
 		JumpSelfTest.addSteps(this);
 		HandshakeSelfTest.addSteps(this);
+		PlatformCallsSelfTest.addSteps(this);
 		AnnouncerSelfTest.addSteps(this);
 		ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
