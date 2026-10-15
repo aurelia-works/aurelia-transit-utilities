@@ -103,3 +103,13 @@
 - `HandshakeSelfTest` (10 checks): published at startup, version + protocol keys, announcer/lang/caps keys, melodies key, melodies off and on each republish and write `handshake.properties`, announcer toggle republishes with melodies kept, restore. They test the recorded map, not JCM's map (dev client has no JCM).
 - Full self-test 85/85 PASS, 0 FAIL, 0 SKIP (73 earlier + 2 chat-announcement checks + 10 handshake). 78 unit tests pass, `./gradlew build` OK, jar `build/libs/aurelia-transit-utilities-1.2.0+mc1.20.1-fabric.jar`. `mod_version` 1.2.0.
 - Not verified live: delivery into JCM's map and AureliaEX reading `:melodies` (Noriega only); the hub layout with the extra button was not screenshotted.
+
+## 2026-10-14 — competitor tools, version 1.3.0
+
+- Research in `docs/COMPETITOR_REVIEW.md` (jadx teardown of MTR 4.x add-ons). Owner: stay on MTR 4.0.x; build C2-C7.
+- Pure logic with unit tests: `route/ReturnRoute` (reverse, nearest other platform of the same station, ends kept, cycle), `speed/SpeedAudit` (slow spots; curve comfort √(1.5·r)·3.6 rounded down to 5, +10 km/h tolerance; platform/siding/turn-back rails skipped), `announce/PlatformCalls` (approaching ≤60 s, arriving ≤15 s, delayed ≥2 min late within 15 min, next train only, once each), `preset/SidingSettings` + `PresetJson` v2 (reads v1), `DepotHealth` keys `no_departures`, `siding_isolated`, `platform_no_station`.
+- Screens: Return route, Speed check, Train inspector; Train presets gain Settings toggle and Whole depot; hub has 12 tools in up to 3 columns and a third toggle (Platform calls, `platform` in announcer.properties).
+- `MtrBridge`: `loadedRails`, `loadedTrains` (delay from `ArrivalsCacheClient`), `platformNear`, `platformArrivals` (minus `getMillisOffset()`), `createReturnRoute`, `applyPreset` with settings, `sidingTrackLinked` (live rails only, null when unloaded).
+- Self-tests added: ReturnRouteSelfTest, SpeedAuditSelfTest, PlatformCallsSelfTest (also in the announcer-only run), settings in PresetSelfTest, siding-linked and no_departures in DepotHealthSelfTest, train inspector check while riding.
+- `./gradlew build` OK, unit tests pass. **The in-game self-test was not run**: the run was stopped at world load because the owner was using the machine. Next: `./gradlew runSelftest` (full) and the announcer-only run, then check screenshots 02_tools, 80_tools_all, 95/96 platform calls.
+- `mod_version` 1.3.0.

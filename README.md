@@ -6,19 +6,26 @@ ATU is **client-side only**: install it on your client, the server does not need
 
 | Tool | What it does |
 |---|---|
-| Train presets | Save a siding's train under a name and put it on any other siding. |
+| Train presets | Save a siding's train (optionally with its settings: acceleration, deceleration, max trains, manual mode and delay handling) under a name and put it on any siding, or on every siding of a depot at once. |
 | Route stop order | Drag a route's stops into a new order (or Move up / down, Reverse). |
 | Platform dwell times | Set the dwell time of many platforms at once: a station, a route or all. |
 | Departure times | Build timed departures (even service, rest hours, shift, "times at the first station"), set trains per hour for a range of hours, or space trains evenly on a loop. |
 | Station overlaps | A platform inside two station zones: choose which station it belongs to. |
 | Zone heights | Give station and depot zones a height range, so stacked stations can share a map area (MTR #815). |
 | Station codes | Number a route's stations JR East style (`Shinjuku JY17`). |
-| Depot health | Every depot's last generation result and setup problems, worst first, with Regenerate. |
+| Depot health | Every depot's last generation result and setup problems, worst first, with Regenerate. Also catches the "generated fine but nothing runs" cases: no departures, sidings not linked to any track, platforms outside every station. |
+| Return route | Build the opposite direction of a route in one go: stops reversed, each moved to the other platform of its station, every stop adjustable before saving; optionally joins the same depots. |
+| Speed check | Read-only check of the rails around you: slow spots between faster rails and curves set faster than is comfortable, with Jump. |
+| Train inspector | Every train within render distance (the one you ride first): route, next stop, depot, siding, speed against the rail limit, and the delay MTR predicts. |
 | Jump to | Teleport to any station, platform, depot or siding (uses `/tp`). |
 
 ## Announcer (1.1.0)
 
 While you ride an MTR train, ATU announces the next station, arrivals, "change here for" other routes, route continuation and the last stop. The lines go to your local chat (nothing is sent to the server) and replace MTR's own chat announcement for the ride. If a resource pack provides the sound events `mtr:aureliaex_ann_<key>`, ATU plays them too; without them it is text only. On/off button in the ATU hub; English only.
+
+### Platform calls (1.3.0)
+
+Standing on a platform (within 4 blocks), ATU announces the next train from MTR's own arrival data, the same data its departure screens show: "approaching" about a minute out, "now arriving" in the last 15 seconds, and once "delayed" when MTR predicts it at least 2 minutes late. Only while you are at a platform; separate on/off button (**Platform calls**) in the ATU hub. Resource packs can provide `platform_approaching`, `platform_arriving` and `platform_delayed` clips; otherwise a chime.
 
 ## Vehicle scripts (1.2.0)
 

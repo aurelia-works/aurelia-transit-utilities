@@ -61,3 +61,31 @@ Dashboard → **ATU** → **Departure times**, pick a depot. It opens on the tab
 
 ### Jump to (MTR #1112)
 Dashboard → **ATU** → **Jump to…**. Search, pick a station (■), platform, depot (⌂) or siding, **Jump**. It sends a normal `/tp`, so the server decides: operators or cheats on. Stations and depots put you on their first platform or siding (zones have no usable height); a zone with no rails keeps your current height.
+
+### Return route (1.3.0)
+1. Dashboard → **ATU** → **Return route**. Pick a route; the right shows the reversed stops. Green rows moved to another platform of the same station ("was 1"); the first and last stop keep theirs.
+2. Pick a stop, **Other platform** cycles through that station's platforms (n/m shown).
+3. Edit the name, **Same depots: ON/OFF**, **Create return route**. The new route appears in MTR's route list with the reversed stops. With depots on, **Regenerate depots** then sends MTR's Generate for them.
+
+### Speed check (1.3.0)
+1. Stand near a line (MTR only sends rails within render distance). Dashboard → **ATU** → **Speed check**.
+2. ▼ red rows: a rail slower than the rails on both sides. ↷ orange rows: a curve set faster than √(1.5·r)·3.6 km/h (rounded down to 5) plus 10 km/h. Platform, siding and turn-back rails are skipped.
+3. **Jump** teleports to the rail; fix it with MTR's own rail tools. **Refresh** re-reads. Nothing is changed by ATU.
+
+### Train inspector (1.3.0)
+1. Dashboard → **ATU** → **Train inspector**. Trains within render distance, nearest first; the ridden one first with ★.
+2. The right side shows route → destination, this/next station, depot and siding, cars and length, speed vs rail limit, state, and on time / late / early from MTR's arrival data. Refreshes every second. **Jump** teleports to a train you are not riding.
+
+### Platform calls (1.3.0)
+1. Hub: **Platform calls: ON** (default on).
+2. Stand on a platform of a route with a train due. About 60 s before arrival: "Platform N: the next train is the R service to D. It arrives in about a minute." plus the car count. In the last 15 s: "the train now arriving is …". A train MTR predicts ≥ 2 min late gets one "delayed" call up to 15 min ahead.
+3. Only the next train per platform; each call once per departure; nothing while riding or away from a platform.
+
+### Train presets with settings (1.3.0)
+1. **Settings: ON** before **Save train** stores acceleration, deceleration, max trains, manual mode and delay options with the train (row shows "+ settings").
+2. **Apply** puts train and settings on the picked siding; **Whole depot** applies to every siding in that siding's depot. Old presets (file version 1) apply train only.
+
+### Depot health additions (1.3.0)
+- ✖ **No departures**: the depot has routes but no departures in its current mode.
+- ✖ **Siding not linked**: a siding's rail has no connection to other track (only checked for rails within render distance).
+- ! **Platform outside a station**: a route stop's platform is in no station zone.
