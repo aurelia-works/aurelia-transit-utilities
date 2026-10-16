@@ -1,0 +1,57 @@
+== ATU perf bench (perf), 2026-10-16 evening, after M1 door sharing, M3 OBJ reader, M6 background loading. Same Mac, dev client, Iris 1.7.6 + Sodium 0.5.13 + Complementary, NS Civity 2 cars.
+INFO 1 train siding(s), lengths [60]
+INFO siding 1 (60 m): NS Civity, 2 cars
+PASS NS trains placed - 1 siding(s)
+INFO 1 train(s), 2 cars, centre 351 -58 1
+INFO shaders off, MTR only                   40 m:  384.4 fps,   2.60 ms/frame,    629 MTR draws/frame,  0.74 ms in MTR renderer, 1 vehicles
+INFO shaders off, MTR only                  100 m:  401.3 fps,   2.49 ms/frame,    581 MTR draws/frame,  0.72 ms in MTR renderer, 1 vehicles
+INFO shaders off, MTR only                  170 m:  446.9 fps,   2.24 ms/frame,    432 MTR draws/frame,  0.60 ms in MTR renderer, 1 vehicles
+INFO shaders off, MTR only                  track:  422.8 fps,   2.36 ms/frame,    437 MTR draws/frame,  0.61 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge                      40 m:  391.5 fps,   2.55 ms/frame,    537 MTR draws/frame,  0.65 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge                     100 m:  430.8 fps,   2.32 ms/frame,    489 MTR draws/frame,  0.59 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge                     170 m:  484.2 fps,   2.07 ms/frame,    340 MTR draws/frame,  0.48 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge                     track:  424.3 fps,   2.36 ms/frame,    345 MTR draws/frame,  0.49 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge + train LOD          40 m:  388.2 fps,   2.58 ms/frame,    537 MTR draws/frame,  0.63 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge + train LOD         100 m:  459.8 fps,   2.17 ms/frame,    445 MTR draws/frame,  0.46 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge + train LOD         170 m:  876.0 fps,   1.14 ms/frame,    238 MTR draws/frame,  0.20 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge + train LOD         track:  467.2 fps,   2.14 ms/frame,    345 MTR draws/frame,  0.46 ms in MTR renderer, 1 vehicles
+INFO shaders off, all fixes                  40 m:  483.6 fps,   2.07 ms/frame,    222 MTR draws/frame,  0.38 ms in MTR renderer, 1 vehicles
+INFO shaders off, all fixes                 100 m:  547.5 fps,   1.83 ms/frame,    178 MTR draws/frame,  0.27 ms in MTR renderer, 1 vehicles
+INFO shaders off, all fixes                 170 m: 1093.1 fps,   0.91 ms/frame,     30 MTR draws/frame,  0.05 ms in MTR renderer, 1 vehicles
+INFO shaders off, all fixes                 track:  457.6 fps,   2.19 ms/frame,    345 MTR draws/frame,  0.47 ms in MTR renderer, 1 vehicles
+INFO shaders on, MTR only                    40 m:   61.8 fps,  16.17 ms/frame,   1258 MTR draws/frame,  9.65 ms in MTR renderer, 1 vehicles
+INFO shaders on, MTR only                   100 m:   68.7 fps,  14.56 ms/frame,   1162 MTR draws/frame,  8.77 ms in MTR renderer, 1 vehicles
+INFO shaders on, MTR only                   170 m:   76.2 fps,  13.13 ms/frame,    864 MTR draws/frame,  6.94 ms in MTR renderer, 1 vehicles
+INFO shaders on, MTR only                   track:   75.8 fps,  13.20 ms/frame,    874 MTR draws/frame,  7.04 ms in MTR renderer, 1 vehicles
+INFO shaders on, merge                       40 m:   72.3 fps,  13.84 ms/frame,   1074 MTR draws/frame,  8.19 ms in MTR renderer, 1 vehicles
+INFO shaders on, merge + fast path           40 m:  104.6 fps,   9.56 ms/frame,   1074 MTR draws/frame,  3.86 ms in MTR renderer, 1 vehicles
+INFO shaders on, + cheap shadows             40 m:  118.9 fps,   8.41 ms/frame,    625 MTR draws/frame,  2.78 ms in MTR renderer, 1 vehicles
+INFO shaders on, all fixes                   40 m:  119.9 fps,   8.34 ms/frame,    310 MTR draws/frame,  1.99 ms in MTR renderer, 1 vehicles
+INFO shaders on, all fixes                  100 m:  128.0 fps,   7.81 ms/frame,    266 MTR draws/frame,  1.60 ms in MTR renderer, 1 vehicles
+INFO shaders on, all fixes                  170 m:  141.9 fps,   7.04 ms/frame,     60 MTR draws/frame,  0.22 ms in MTR renderer, 1 vehicles
+INFO shaders on, all fixes                  track:  125.7 fps,   7.96 ms/frame,    433 MTR draws/frame,  2.38 ms in MTR renderer, 1 vehicles
+INFO shaders off, MTR loading                40 m:  520.2 fps,   1.92 ms/frame,    222 MTR draws/frame,  0.38 ms in MTR renderer, 1 vehicles
+INFO MTR loading                            model builds: 18, 1058 ms total on the render thread, of which 432 ms merge and upload; longest 0 ms; last -10.59 s after the reload
+INFO MTR loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 0 ms (any thread), 0 background builds, 0 files left to MTR's reader
+INFO shaders off, ATU loading                40 m:  490.8 fps,   2.04 ms/frame,    222 MTR draws/frame,  0.40 ms in MTR renderer, 1 vehicles
+INFO ATU loading                            model builds: 18, 407 ms total on the render thread, of which 123 ms merge and upload; longest 0 ms; last -11.24 s after the reload
+INFO ATU loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 44 ms (any thread), 0 background builds, 0 files left to MTR's reader
+PASS door states share GPU buffers - 88 vertex arrays reused
+PASS ATU reads every NS train OBJ file - 0 left to MTR
+INFO shaders off, MTR loading                40 m:  521.1 fps,   1.92 ms/frame,    222 MTR draws/frame,  0.40 ms in MTR renderer, 1 vehicles
+INFO MTR loading                            model builds: 18, 911 ms total on the render thread, of which 258 ms merge and upload; longest 0 ms; last -10.69 s after the reload
+INFO MTR loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 0 ms (any thread), 0 background builds, 0 files left to MTR's reader
+INFO shaders off, ATU loading                40 m:  490.0 fps,   2.04 ms/frame,    222 MTR draws/frame,  0.40 ms in MTR renderer, 1 vehicles
+INFO ATU loading                            model builds: 18, 848 ms total on the render thread, of which 152 ms merge and upload; longest 0 ms; last -10.84 s after the reload
+INFO ATU loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 55 ms (any thread), 0 background builds, 0 files left to MTR's reader
+PASS door states share GPU buffers - 88 vertex arrays reused
+PASS ATU reads every NS train OBJ file - 0 left to MTR
+PASS unused MTR models free their GPU arrays - 144 vertex arrays freed
+INFO shaders off, return, render-thread loading  40 m:  479.0 fps,   2.09 ms/frame,    222 MTR draws/frame,  0.40 ms in MTR renderer, 1 vehicles
+INFO return, render-thread loading          model builds: 18, 225 ms total on the render thread, longest 74 ms, last 1.40 s after coming back; 0 from a background parse
+PASS unused MTR models free their GPU arrays - 144 vertex arrays freed
+INFO shaders off, return, background loading  40 m:  477.3 fps,   2.10 ms/frame,    222 MTR draws/frame,  0.41 ms in MTR renderer, 1 vehicles
+INFO return, background loading             model builds: 28, 206 ms total on the render thread, longest 87 ms, last 1.45 s after coming back; 2 from a background parse
+PASS train models load in the background - 2 models built from a background parse
+RESULT PASS
+

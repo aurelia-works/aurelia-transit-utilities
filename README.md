@@ -31,9 +31,26 @@ Standing on a platform (within 4 blocks), ATU announces the next train from MTR'
 
 When Joban Client Mod is installed, ATU publishes its settings to JCM vehicle scripts through JCM's `registerAddonVersion`: its version, whether the Announcer is on, and a **Vehicle melodies** on/off preference (ATU hub) that scripts may read to mute departure melodies. Scripts that do not read it are unaffected. Keys and behaviour: `docs/HANDSHAKE.md`.
 
+## Performance (1.4.0)
+
+A **Performance** page in the ATU hub fixes slow spots in MTR 4.0.5's train and rail rendering and its model loading. Every fix is a switch, on by default; off runs MTR's own code. The fixes apply only on MTR 4.0.5 (on any other version they stay off) and are client-side.
+
+- **Merge train parts**: a car is drawn with one call per material instead of one per OBJ group and material, and the parts both door states use are uploaded once instead of twice.
+- **Shader pack fast path**: with Iris, MTR re-bound the whole shader for every draw call; ATU binds it once per batch.
+- **Cheaper shadows** (shader packs): no translucent parts and no interiors in the shadow pass; rails use their far tier.
+- **Train and rail LOD**: distant cars lose their interior, then become a box without loading the model; distant 3D rails become MTR's flat strips.
+- **Faster model loading**: ATU's own OBJ reader and mesh builder (same output as MTR's, checked vertex by vertex on 50 OBJ files from 8 packs) and no shader recompile per model.
+- **Load trains in the background**: OBJ files are read on a worker thread, so a train coming into view no longer freezes a frame.
+- **Free unused models**: models MTR drops give back their memory and GPU buffers.
+- F3 shows ATU's counters (MTR draw calls, render time, model builds).
+
+Measured numbers: `docs/SESSION_LOG.md` and `tools/perfbench/`.
+
 ## How it works
 
-ATU uses only MTR's public classes. It reads the data MTR already sends to the client when its dashboard opens and saves with the same update packets MTR's own screens use. It has no mixins and changes nothing inside MTR. Editing follows MTR's own permission rule (creative or survival mode); Jump to needs `/tp` rights.
+The tools use only MTR's public classes. They read the data MTR already sends to the client when its dashboard opens and save with the same update packets MTR's own screens use. Editing follows MTR's own permission rule (creative or survival mode); Jump to needs `/tp` rights.
+
+The performance fixes (1.4.0) are the only part that changes MTR: client-side mixins into its rendering and model loading, checked against MTR 4.0.5 and switched off on any other version. They never touch MTR's data, saves or network traffic.
 
 What ATU deliberately does not do, because MTR itself would have to change: per-route train speed, rail angles finer than 22.5°, trains choosing any free platform, rest hours on "repeat infinitely" loops. See `docs/FEASIBILITY.md`.
 

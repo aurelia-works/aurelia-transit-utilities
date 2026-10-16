@@ -6,9 +6,12 @@
 	"compatibilityLevel": "JAVA_17",
 	"client": [
 		"DebugHudMixin",
+		"mtr.CachedResourceAccess",
 		"mtr.CachedResourceMixin",
 		"mtr.MainRendererMixin",
 		"mtr.ObjModelAccess",
+		"mtr.ObjModelLoaderMixin",
+		"mtr.ObjModelShareMixin",
 		"mtr.OptimizedModelMixin",
 		"mtr.OptimizedModelWrapperAccess",
 		"mtr.OptimizedRendererMixin",
@@ -19,6 +22,8 @@
 		"mtr.VertexArrayMixin",
 		"mtr.VertexBufferAccess",
 		"mtr.VehicleResourceQueueMixin",
+		"mtr.VehicleModelMixin",
+		"mtr.VehicleResourceBuildMixin",
 		"mtr.VertexAttributeStateMixin"
 	],
 	"injectors": {"defaultRequire": 0}

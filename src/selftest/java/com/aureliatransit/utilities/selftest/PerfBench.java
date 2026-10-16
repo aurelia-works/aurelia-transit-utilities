@@ -2,6 +2,7 @@ package com.aureliatransit.utilities.selftest;
 
 import com.aureliatransit.utilities.client.MtrBridge;
 import com.aureliatransit.utilities.client.perf.GlGarbage;
+import com.aureliatransit.utilities.perf.AsyncModels;
 import com.aureliatransit.utilities.perf.Perf;
 import com.aureliatransit.utilities.perf.PerfSettings;
 import com.aureliatransit.utilities.preset.PresetCar;
@@ -76,6 +77,9 @@ final class PerfBench {
 		test.act("close dashboard", () -> MinecraftClient.getInstance().setScreen(null));
 		test.act("NS trains in sidings", () -> placeTrains(test));
 		test.waitFor("NS trains parked", () -> nsTrains() >= wantedTrains, 120 * SECONDS);
+		// The server has them parked; the client may not have received them yet.
+		test.waitFor("NS trains on the client", () -> !trains().isEmpty(), 60 * SECONDS);
+		test.pause(2 * SECONDS);
 		test.act("find trains", () -> locate(test));
 
 		if (frameRates) {
@@ -86,6 +90,7 @@ final class PerfBench {
 			sampling = false;
 			configure(ALL);
 			Perf.settings().fasterModelLoading = true;
+			Perf.settings().backgroundModelLoading = true;
 			Perf.settings().freeUnusedModels = true;
 		});
 	}
@@ -123,39 +128,76 @@ final class PerfBench {
 	private static void loading(AtuSelfTest test) {
 		for (final boolean fast : new boolean[]{false, true, false, true}) {
 			final String label = fast ? "ATU loading" : "MTR loading";
-			final long[] before = new long[1];
-			final double[] beforeMillis = new double[2];
+			final long[] before = new long[6];
+			final double[] beforeMillis = new double[3];
 			// Counted from before the reload: MTR rebuilds the visible models one per tick right after it.
 			test.act(label, () -> {
 				configure(ALL);
 				Perf.settings().fasterModelLoading = fast;
+				Perf.settings().backgroundModelLoading = fast;
 				before[0] = Perf.STATS.loads();
+				before[1] = Perf.STATS.arraysCreated();
+				before[2] = Perf.STATS.sharedArrays();
+				before[3] = AsyncModels.built();
+				before[4] = Perf.STATS.parseFallbacks();
 				beforeMillis[0] = Perf.STATS.loadMillis();
 				beforeMillis[1] = Perf.STATS.mergeMillis();
+				beforeMillis[2] = Perf.STATS.parseMillis();
 			});
 			reloadResources(test);
+			test.act("phase " + label, () -> {
+				Perf.STATS.startPhase();
+				before[5] = System.nanoTime();
+			});
 			// Close enough for full detail: every car model and rail model gets built.
 			measure(test, "shaders off, " + label, ALL, 40);
-			test.act("builds " + label, () -> test.note(String.format(Locale.ROOT, "%-38s model builds: %d, %.0f ms total, of which %.0f ms merge and upload", label, Perf.STATS.loads() - before[0], Perf.STATS.loadMillis() - beforeMillis[0], Perf.STATS.mergeMillis() - beforeMillis[1])));
+			test.act("builds " + label, () -> {
+				test.note(String.format(Locale.ROOT, "%-38s model builds: %d, %.0f ms total on the render thread, of which %.0f ms merge and upload; longest %.0f ms; last %.2f s after the reload", label, Perf.STATS.loads() - before[0], Perf.STATS.loadMillis() - beforeMillis[0], Perf.STATS.mergeMillis() - beforeMillis[1], Perf.STATS.phaseMaxLoadMillis(), (Perf.STATS.lastLoadAt() - before[5]) / 1e9));
+				test.note(String.format(Locale.ROOT, "%-38s GPU vertex arrays created: %d, shared between door states: %d; OBJ reading %.0f ms (any thread), %d background builds, %d files left to MTR's reader", label, Perf.STATS.arraysCreated() - before[1], Perf.STATS.sharedArrays() - before[2], Perf.STATS.parseMillis() - beforeMillis[2], AsyncModels.built() - before[3], Perf.STATS.parseFallbacks() - before[4]));
+				if (fast) {
+					test.check("door states share GPU buffers", Perf.STATS.sharedArrays() > before[2], (Perf.STATS.sharedArrays() - before[2]) + " vertex arrays reused");
+					test.check("ATU reads every NS train OBJ file", Perf.STATS.parseFallbacks() == before[4], (Perf.STATS.parseFallbacks() - before[4]) + " left to MTR");
+				}
+			});
 		}
-		final long[] freedBefore = new long[1];
-		test.act("camera far away", () -> {
-			freedBefore[0] = GlGarbage.freedArrays();
-			command(String.format(Locale.ROOT, "tp @s %.2f %.2f %.2f", center.x + 3000, center.y + 20, center.z + 3000));
-		});
-		// MTR drops a model after 60 s without use (CachedResource), then the Java objects must be collected.
-		test.pause(80 * SECONDS);
-		test.act("collect", System::gc);
-		test.pause(5 * SECONDS);
-		test.act("collect again", System::gc);
-		test.pause(5 * SECONDS);
-		test.act("freed GPU arrays", () -> {
-			final long freed = GlGarbage.freedArrays() - freedBefore[0];
-			test.check("unused MTR models free their GPU arrays", freed > 0, freed + " vertex arrays freed");
-		});
-		// Back again: MTR rebuilds the dropped models and the train must look as before.
-		measure(test, "shaders off, after models were freed", ALL, 40);
-		test.screenshot("perf_40_after_free");
+		// Twice: the camera leaves until MTR drops the models, then comes back and MTR rebuilds them without a reload
+		// screen. First with every model built on the render thread, then with background loading.
+		for (final boolean background : new boolean[]{false, true}) {
+			final String label = background ? "return, background loading" : "return, render-thread loading";
+			final long[] freedBefore = new long[1];
+			final long[] before = new long[3];
+			final double[] beforeMillis = new double[1];
+			test.act("camera far away", () -> {
+				configure(ALL);
+				Perf.settings().backgroundModelLoading = background;
+				freedBefore[0] = GlGarbage.freedArrays();
+				command(String.format(Locale.ROOT, "tp @s %.2f %.2f %.2f", center.x + 3000, center.y + 20, center.z + 3000));
+			});
+			// MTR drops a model after 60 s without use (CachedResource), then the Java objects must be collected.
+			test.pause(80 * SECONDS);
+			test.act("collect", System::gc);
+			test.pause(5 * SECONDS);
+			test.act("collect again", System::gc);
+			test.pause(5 * SECONDS);
+			test.act("freed GPU arrays", () -> {
+				final long freed = GlGarbage.freedArrays() - freedBefore[0];
+				test.check("unused MTR models free their GPU arrays", freed > 0, freed + " vertex arrays freed");
+				Perf.STATS.startPhase();
+				before[0] = Perf.STATS.loads();
+				before[1] = AsyncModels.built();
+				before[2] = System.nanoTime();
+				beforeMillis[0] = Perf.STATS.loadMillis();
+			});
+			// Back again: MTR rebuilds the dropped models and the train must look as before.
+			measure(test, "shaders off, " + label, ALL, 40);
+			test.act("builds " + label, () -> {
+				test.note(String.format(Locale.ROOT, "%-38s model builds: %d, %.0f ms total on the render thread, longest %.0f ms, last %.2f s after coming back; %d from a background parse", label, Perf.STATS.loads() - before[0], Perf.STATS.loadMillis() - beforeMillis[0], Perf.STATS.phaseMaxLoadMillis(), (Perf.STATS.lastLoadAt() - before[2]) / 1e9, AsyncModels.built() - before[1]));
+				if (background) {
+					test.check("train models load in the background", AsyncModels.built() > before[1], (AsyncModels.built() - before[1]) + " models built from a background parse");
+				}
+			});
+			test.screenshot("perf_40_" + (background ? "return_background" : "return_render_thread"));
+		}
 	}
 
 	/** Which fixes are on. Train LOD is interiors 5 / boxes 10 chunks, rail LOD flat 3 / far 8 chunks. */

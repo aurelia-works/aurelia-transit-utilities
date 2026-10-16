@@ -1,13 +1,19 @@
 package com.aureliatransit.utilities.mixin.mtr;
 
+import com.aureliatransit.utilities.perf.AsyncModels;
 import com.aureliatransit.utilities.perf.Perf;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.mod.resource.CachedResource;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -26,6 +32,9 @@ public abstract class CachedResourceMixin {
 
 	@Unique
 	private static final List<WeakReference<CachedResource<?>>> ATU$WEAK = new ArrayList<>();
+	@Shadow
+	private static boolean canFetchCache;
+
 	@Unique
 	private static int atu$depth;
 
@@ -55,13 +64,15 @@ public abstract class CachedResourceMixin {
 	}
 
 	@WrapOperation(method = "getData", at = @At(value = "INVOKE", target = "Ljava/util/function/Supplier;get()Ljava/lang/Object;"))
-	private Object atu$timeBuild(Supplier<?> supplier, Operation<Object> original) {
+	private Object atu$timeBuild(Supplier<?> supplier, Operation<Object> original, @Local(argsOnly = true) boolean force) {
+		AsyncModels.enterBuild(force);
 		// Caches nest (a train's cache builds its model caches); only the outermost build is one stall.
 		if (atu$depth++ > 0) {
 			try {
 				return original.call(supplier);
 			} finally {
 				atu$depth--;
+				AsyncModels.exitBuild(force);
 			}
 		}
 		final long start = System.nanoTime();
@@ -69,7 +80,24 @@ public abstract class CachedResourceMixin {
 			return original.call(supplier);
 		} finally {
 			atu$depth--;
+			AsyncModels.exitBuild(force);
 			Perf.STATS.load(System.nanoTime() - start);
 		}
+	}
+
+	/**
+	 * MTR builds one cache per client tick. When the build was only "not ready yet" (a model still loading in the
+	 * background), it cost nothing, so the next cache may build in the same tick.
+	 */
+	@Inject(method = "getData", at = @At("RETURN"))
+	private void atu$returnUnusedSlot(boolean force, CallbackInfoReturnable<Object> cir) {
+		if (atu$depth == 0 && AsyncModels.takeDeferred()) {
+			canFetchCache = true;
+		}
+	}
+
+	@Inject(method = "tick", at = @At("HEAD"))
+	private static void atu$tickBackgroundLoading(CallbackInfo ci) {
+		AsyncModels.tick();
 	}
 }

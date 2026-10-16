@@ -18,7 +18,9 @@ import java.util.function.ToIntFunction;
 public final class PerformanceScreen extends Screen {
 
 	private static final int BUTTON_WIDTH = 260;
+	private static final int COLUMN_WIDTH = 200;
 	private static final int ROW = 24;
+	private int buttonWidth = BUTTON_WIDTH;
 	private final Screen parent;
 
 	public PerformanceScreen(Screen parent) {
@@ -28,7 +30,10 @@ public final class PerformanceScreen extends Screen {
 
 	@Override
 	protected void init() {
-		final int left = (width - BUTTON_WIDTH) / 2;
+		// Two columns (fixes, distances) when the window is wide enough, else one.
+		final boolean twoColumns = width >= 2 * COLUMN_WIDTH + 30;
+		buttonWidth = twoColumns ? COLUMN_WIDTH : Math.min(BUTTON_WIDTH, width - 20);
+		final int left = twoColumns ? width / 2 - COLUMN_WIDTH - 5 : (width - buttonWidth) / 2;
 		int y = 52;
 		toggle("merge", settings -> settings.mergeTrainParts, (settings) -> settings.mergeTrainParts = !settings.mergeTrainParts, left, y);
 		y += ROW;
@@ -36,23 +41,26 @@ public final class PerformanceScreen extends Screen {
 		y += ROW;
 		toggle("shadows", settings -> settings.cheapShadows, (settings) -> settings.cheapShadows = !settings.cheapShadows, left, y);
 		y += ROW;
-		distance("interior", settings -> settings.trainInteriorChunks, (settings, value) -> settings.trainInteriorChunks = value, left, y);
-		y += ROW;
-		distance("box", settings -> settings.trainBoxChunks, (settings, value) -> settings.trainBoxChunks = value, left, y);
-		y += ROW;
-		distance("rail_simple", settings -> settings.railSimpleChunks, (settings, value) -> settings.railSimpleChunks = value, left, y);
-		y += ROW;
-		distance("rail_far", settings -> settings.railFarChunks, (settings, value) -> settings.railFarChunks = value, left, y);
-		y += ROW;
 		toggle("loading", settings -> settings.fasterModelLoading, (settings) -> settings.fasterModelLoading = !settings.fasterModelLoading, left, y);
+		y += ROW;
+		toggle("background", settings -> settings.backgroundModelLoading, (settings) -> settings.backgroundModelLoading = !settings.backgroundModelLoading, left, y);
 		y += ROW;
 		toggle("free", settings -> settings.freeUnusedModels, (settings) -> settings.freeUnusedModels = !settings.freeUnusedModels, left, y);
 		y += ROW;
 		toggle("overlay", settings -> settings.debugOverlay, (settings) -> settings.debugOverlay = !settings.debugOverlay, left, y);
+		final int right = twoColumns ? width / 2 + 5 : left;
+		y = twoColumns ? 52 : y + ROW;
+		distance("interior", settings -> settings.trainInteriorChunks, (settings, value) -> settings.trainInteriorChunks = value, right, y);
+		y += ROW;
+		distance("box", settings -> settings.trainBoxChunks, (settings, value) -> settings.trainBoxChunks = value, right, y);
+		y += ROW;
+		distance("rail_simple", settings -> settings.railSimpleChunks, (settings, value) -> settings.railSimpleChunks = value, right, y);
+		y += ROW;
+		distance("rail_far", settings -> settings.railFarChunks, (settings, value) -> settings.railFarChunks = value, right, y);
 		y += ROW;
 		// Merging happens when MTR builds a model, so already-loaded trains keep their old buffers until a reload.
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.aurelia_transit_utilities.perf.reload"), button -> client.reloadResources())
-				.dimensions(left, y, BUTTON_WIDTH, 20).tooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.perf.reload.tooltip"))).build());
+				.dimensions(right, y, buttonWidth, 20).tooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.perf.reload.tooltip"))).build());
 		addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> close()).dimensions((width - 200) / 2, height - 28, 200, 20).build());
 	}
 
@@ -61,7 +69,7 @@ public final class PerformanceScreen extends Screen {
 			flip.accept(Perf.settings());
 			Perf.save();
 			button.setMessage(label(key, get));
-		}).dimensions(x, y, BUTTON_WIDTH, 20).tooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.perf." + key + ".tooltip"))).build());
+		}).dimensions(x, y, buttonWidth, 20).tooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.perf." + key + ".tooltip"))).build());
 	}
 
 	private void distance(String key, ToIntFunction<PerfSettings> get, ObjIntConsumer<PerfSettings> set, int x, int y) {
@@ -69,7 +77,7 @@ public final class PerformanceScreen extends Screen {
 			set.accept(Perf.settings(), PerfSettings.nextDistance(get.applyAsInt(Perf.settings())));
 			Perf.save();
 			button.setMessage(distanceLabel(key, get));
-		}).dimensions(x, y, BUTTON_WIDTH, 20).tooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.perf." + key + ".tooltip"))).build());
+		}).dimensions(x, y, buttonWidth, 20).tooltip(Tooltip.of(Text.translatable("gui.aurelia_transit_utilities.perf." + key + ".tooltip"))).build());
 	}
 
 	private static Text distanceLabel(String key, ToIntFunction<PerfSettings> get) {

@@ -24,6 +24,7 @@ public abstract class VertexArrayMixin {
 
 	@Inject(method = "<init>(Lorg/mtr/mapping/render/model/Mesh;Lorg/mtr/mapping/render/vertex/VertexAttributeMapping;)V", at = @At("RETURN"))
 	private void atu$trackBuffers(Mesh mesh, VertexAttributeMapping mapping, CallbackInfo ci) {
+		Perf.STATS.arrayCreated();
 		if (Perf.settings().freeUnusedModels) {
 			atu$buffers = GlGarbage.track(this, id, ((VertexBufferAccess) (Object) mesh.vertexBuffer).atu$id(), ((VertexBufferAccess) (Object) mesh.indexBuffer).atu$id());
 		}

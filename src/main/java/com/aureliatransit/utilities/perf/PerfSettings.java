@@ -22,8 +22,13 @@ public final class PerfSettings {
 	public boolean shaderPackFastPath = true;
 	/** In a shader pack's shadow pass, train cars cast shadows from their exterior only and translucent parts cast none. */
 	public boolean cheapShadows = true;
-	/** MTR does not recompile its shaders for every model it loads (Joban Client Mod does the same; ATU then leaves it to JCM). */
+	/**
+	 * Faster model loading: ATU's OBJ reader and mesh builder (same output as MTR's), and no shader recompile for every
+	 * model MTR loads (Joban Client Mod does that part too; ATU then leaves it to JCM).
+	 */
 	public boolean fasterModelLoading = true;
+	/** Train OBJ files are read on a worker thread instead of stalling a frame (needs fasterModelLoading). */
+	public boolean backgroundModelLoading = true;
 	/** Models MTR has dropped give their memory and GPU buffers back. */
 	public boolean freeUnusedModels = true;
 	/** ATU lines on the F3 screen: MTR draw calls and render time per frame. */
@@ -56,6 +61,7 @@ public final class PerfSettings {
 		settings.shaderPackFastPath = flag(properties, "shaderPackFastPath", settings.shaderPackFastPath);
 		settings.cheapShadows = flag(properties, "cheapShadows", settings.cheapShadows);
 		settings.fasterModelLoading = flag(properties, "fasterModelLoading", settings.fasterModelLoading);
+		settings.backgroundModelLoading = flag(properties, "backgroundModelLoading", settings.backgroundModelLoading);
 		settings.freeUnusedModels = flag(properties, "freeUnusedModels", settings.freeUnusedModels);
 		settings.debugOverlay = flag(properties, "debugOverlay", settings.debugOverlay);
 		settings.trainInteriorChunks = chunks(properties, "trainInteriorChunks", settings.trainInteriorChunks);
@@ -71,6 +77,7 @@ public final class PerfSettings {
 		properties.setProperty("shaderPackFastPath", Boolean.toString(shaderPackFastPath));
 		properties.setProperty("cheapShadows", Boolean.toString(cheapShadows));
 		properties.setProperty("fasterModelLoading", Boolean.toString(fasterModelLoading));
+		properties.setProperty("backgroundModelLoading", Boolean.toString(backgroundModelLoading));
 		properties.setProperty("freeUnusedModels", Boolean.toString(freeUnusedModels));
 		properties.setProperty("debugOverlay", Boolean.toString(debugOverlay));
 		properties.setProperty("trainInteriorChunks", Integer.toString(trainInteriorChunks));

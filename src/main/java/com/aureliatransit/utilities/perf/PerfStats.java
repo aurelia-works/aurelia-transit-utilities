@@ -17,6 +17,13 @@ public final class PerfStats {
 	private long loadNanos;
 	private long maxLoadNanos;
 	private long mergeNanos;
+	private long sharedArrays;
+	private long phaseMaxLoadNanos;
+	private long lastLoadAt;
+	private long arraysCreated;
+	/** OBJ reading may run on worker threads (background loading). */
+	private final java.util.concurrent.atomic.LongAdder parseNanos = new java.util.concurrent.atomic.LongAdder();
+	private final java.util.concurrent.atomic.LongAdder parseFallbacks = new java.util.concurrent.atomic.LongAdder();
 
 	private double drawsPerFrame;
 	private double renderMillisPerFrame;
@@ -31,11 +38,64 @@ public final class PerfStats {
 		loads++;
 		loadNanos += nanos;
 		maxLoadNanos = Math.max(maxLoadNanos, nanos);
+		phaseMaxLoadNanos = Math.max(phaseMaxLoadNanos, nanos);
+		lastLoadAt = System.nanoTime();
+	}
+
+	/** Starts a measuring phase for {@link #phaseMaxLoadMillis} (benchmarks). */
+	public void startPhase() {
+		phaseMaxLoadNanos = 0;
+	}
+
+	/** Longest single model build since {@link #startPhase}. */
+	public double phaseMaxLoadMillis() {
+		return phaseMaxLoadNanos / 1e6;
+	}
+
+	/** {@link System#nanoTime} of the end of the last model build. */
+	public long lastLoadAt() {
+		return lastLoadAt;
+	}
+
+	/** MTR created a GPU vertex array (any model). */
+	public void arrayCreated() {
+		arraysCreated++;
+	}
+
+	public long arraysCreated() {
+		return arraysCreated;
 	}
 
 	/** The merge and upload part of a model build (ATU's merged upload only). */
 	public void merge(long nanos) {
 		mergeNanos += nanos;
+	}
+
+	/** One OBJ file read (ATU's reader, or the time it took to hand a file back to MTR's). Any thread. */
+	public void parse(long nanos) {
+		parseNanos.add(nanos);
+	}
+
+	/** A file ATU's reader left to MTR's javagl reader. Any thread. */
+	public void parseFallback() {
+		parseFallbacks.increment();
+	}
+
+	public double parseMillis() {
+		return parseNanos.sum() / 1e6;
+	}
+
+	public long parseFallbacks() {
+		return parseFallbacks.sum();
+	}
+
+	/** A model reused the other door state's buffers instead of uploading them again. */
+	public void shared(int vertexArrays) {
+		sharedArrays += vertexArrays;
+	}
+
+	public long sharedArrays() {
+		return sharedArrays;
 	}
 
 	public double mergeMillis() {

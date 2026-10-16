@@ -2,6 +2,7 @@
 # Headless benchmark of MTR 4.0.5's OBJ vehicle path vs the FastObj prototype. Never starts Minecraft.
 #   tools/objbench/run.sh cpu <unzipped pack dir>...   # equivalence + CPU timing + heap
 #   tools/objbench/run.sh gl  <unzipped pack dir>...   # shader reload + real GL upload (headless CGL context, no window)
+#   tools/objbench/run.sh parse [<unzipped pack dir>...] # ATU's OBJ reader vs MTR's javagl reader: fixtures + packs, exact
 # Needs JDK 21, the Gradle cache of this project (MTR 4.0.5 jar, Minecraft intermediary jar) and LWJGL 3.3.1 from PrismLauncher.
 set -e
 HERE=${0:A:h}
@@ -18,10 +19,12 @@ CP="$CP:$(find $C/com.mojang -name '*.jar' ! -name '*sources*' ! -name '*javadoc
 CP="$CP:$L/lwjgl/3.3.1/lwjgl-3.3.1.jar:$L/lwjgl-opengl/3.3.1/lwjgl-opengl-3.3.1.jar:$L/lwjgl-natives-macos-arm64/3.3.1/lwjgl-natives-macos-arm64-3.3.1.jar:$L/lwjgl-opengl-natives-macos-arm64/3.3.1/lwjgl-opengl-natives-macos-arm64-3.3.1.jar"
 OUT=$HERE/out
 mkdir -p $OUT
-$JH/bin/javac -nowarn -d $OUT -cp "$CP" $HERE/src/*.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/MergedObjUpload.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/FastMeshBuild.java
+$JH/bin/javac -nowarn -d $OUT -cp "$CP" $HERE/src/*.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/MergedObjUpload.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/FastMeshBuild.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/FastObjParse.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/FastObjLoader.java
 MODE=$1
 shift
-if [[ $MODE == gl ]]; then
+if [[ $MODE == parse ]]; then
+	nice -n 10 $JH/bin/java -Xmx2g -cp "$OUT:$CP" ParseBench "$@" ${=BENCH_ARGS}
+elif [[ $MODE == gl ]]; then
 	nice -n 10 $JH/bin/java -Xmx2g -Djava.awt.headless=true -cp "$OUT:$CP" GlBench ~/.gradle/caches/fabric-loom/1.20.1/minecraft-client.jar "$@"
 else
 	nice -n 10 $JH/bin/java -Xmx2g -cp "$OUT:$CP" Bench "$@" --runs 3 --threads 4 ${=BENCH_ARGS}

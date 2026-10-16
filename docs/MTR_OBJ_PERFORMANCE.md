@@ -1,7 +1,7 @@
 # MTR OBJ train loading: findings, benchmark and plan
 
 Date: 2026-10-16. Target: MTR 4.0.5, Minecraft 1.20.1 Fabric. Machine: MacBook M1, 8 GB, Apple GL 4.1 over Metal.
-Status: research and prototype only. Nothing here is in the mod yet, and none of it ran in game.
+Status (updated 2026-10-16, evening): built in ATU 1.4.0. M1, M2, M3, M5 and M6 are in the mod (section 7); M4 and M7 are not built. Sections 1-6 are the original research.
 
 ## 1. Why OBJ trains load slowly (MTR 4.0.5, from the jar's bytecode)
 
@@ -103,3 +103,17 @@ Update 2026-10-16: LOD for 3D rails and trains, and the proposal to put all of t
 
 - MTR 4.0.5 jar decompiled with jadx (classes named above). JCM 2.2.5 mixins from `JCM-fabric-2.2.5+1.20.1.jar` in the Noriega instance.
 - Subagent research (Haiku): MTR issue tracker, MTR master/4.0.6/4.1 source, NTE, JCM, `mtr-optimizer`. Notable: NTE uploads each model once and places it with a model-matrix per instance; MTR 4.1 (MC 1.21) rewrites this path (`NewOptimizedModel`), so these fixes are specific to 4.0.x.
+
+## 7. What 1.4.0 ships (2026-10-16)
+
+| Step | In 1.4.0 | Where |
+|---|---|---|
+| M1 | Yes. The doors-open and doors-closed lists of each part condition are linked when MTR creates them; the parts both use are uploaded once (merged per material) and both models draw those buffers; the closed model adds the door parts. | `perf/DoorShare`, `VehicleResourceBuildMixin` (lambda 17), `ObjModelShareMixin`, `OptimizedModelMixin` |
+| M2 | Yes (outside resource reloads; left to JCM when it is installed). | `OptimizedRendererMixin.beginReload` |
+| M3 | Yes, in two parts. The mesh build (normals, de-duplication, packing) is `FastMeshBuild` (byte-identical buffers). The OBJ read is `FastObjParse` + `FastObjLoader`, hooked at `ObjModelLoader.loadModel(String, ...)`: it returns exactly the `RawMesh`es javagl gives MTR (vertex order, UVs, normals, faces, materials), so `ObjModel` stays a normal MTR object for JCM and scripts. Files outside the plain subset (line continuations, tabs, mixed corner forms, bad indices or numbers) go to javagl. | `perf/FastObjParse`, `perf/FastObjLoader`, `ObjModelLoaderMixin` |
+| M4 | No. With M3 and M6 a returning train is parsed again, but off the render thread and about 4x faster; a parsed-geometry cache would cost memory for little left to gain. | |
+| M5 | Yes (weak cache registry, GPU buffers freed when unreachable). | `CachedResourceMixin`, `client/perf/GlGarbage` |
+| M6 | Yes. The OBJ text is read on the render thread through MTR's provider (its resource cache is not thread-safe); parsing and the vertex and face lists run on 1-3 worker threads; MTL files, materials, textures and all GPU uploads stay on the render thread. Until the parse is done `createModel` returns null, which MTR's caches already treat as "not ready", and the one-build-per-tick slot is handed back. All model files of a car are started at once. Forced builds and builds during a resource reload stay synchronous. | `perf/AsyncModels`, `VehicleModelMixin`, `VehicleResourceBuildMixin` (lambda 18), `CachedResourceMixin` |
+| M7 | No (no legacy test pack). | |
+
+Checks: `tools/objbench/run.sh parse <packs>` compares ATU's reader with MTR's javagl reader on 36 hand-written edge cases (both split modes) and on every OBJ file of the packs; on 2026-10-16 all 50 distinct files of the 8 local packs were identical, 2.27 s → 0.61 s (3.7x; a repeat run 3.4x). Unit tests: `FastObjParseTest`. In game: `tools/perfbench/`.

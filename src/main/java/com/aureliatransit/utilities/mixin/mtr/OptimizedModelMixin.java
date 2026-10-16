@@ -1,6 +1,7 @@
 package com.aureliatransit.utilities.mixin.mtr;
 
 import com.aureliatransit.utilities.client.perf.RailLodClient;
+import com.aureliatransit.utilities.perf.DoorShare;
 import com.aureliatransit.utilities.perf.MergedObjUpload;
 import com.aureliatransit.utilities.perf.Perf;
 import org.mtr.mapping.mapper.OptimizedModel;
@@ -15,11 +16,18 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
-/** One buffer per material per car instead of one per OBJ group per material ({@link MergedObjUpload}). */
+/**
+ * One buffer per material per car instead of one per OBJ group per material ({@link MergedObjUpload}), and the parts
+ * both door states use uploaded once ({@link DoorShare}).
+ */
 @Mixin(value = OptimizedModel.class, remap = false)
 public abstract class OptimizedModelMixin {
 
@@ -59,8 +67,41 @@ public abstract class OptimizedModelMixin {
 		}
 	}
 
+	/** Parts both door states use are uploaded once ({@link DoorShare}); the rest as one merged upload. */
 	@Unique
 	private static List<VertexArray> atu$uploadTimed(Collection<OptimizedModel.ObjModel> objModels) {
+		final Set<OptimizedModel.ObjModel> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+		final List<OptimizedModel.ObjModel> unique = new ArrayList<>(objModels.size());
+		for (final OptimizedModel.ObjModel objModel : objModels) {
+			if (seen.add(objModel)) {
+				unique.add(objModel);
+			}
+		}
+		final DoorShare share = DoorShare.of(unique);
+		if (share == null) {
+			return atu$uploadMerged(unique);
+		}
+		final List<OptimizedModel.ObjModel> common = new ArrayList<>(unique.size());
+		final List<OptimizedModel.ObjModel> rest = new ArrayList<>();
+		for (final OptimizedModel.ObjModel objModel : unique) {
+			(share.isCommon(objModel) ? common : rest).add(objModel);
+		}
+		List<VertexArray> commonArrays = share.uploaded();
+		if (commonArrays == null) {
+			commonArrays = atu$uploadMerged(common);
+			share.store(commonArrays);
+		} else {
+			Perf.STATS.shared(commonArrays.size());
+		}
+		final List<VertexArray> vertexArrays = new ArrayList<>(commonArrays);
+		if (!rest.isEmpty()) {
+			vertexArrays.addAll(atu$uploadMerged(rest));
+		}
+		return vertexArrays;
+	}
+
+	@Unique
+	private static List<VertexArray> atu$uploadMerged(List<OptimizedModel.ObjModel> objModels) {
 		final Function<OptimizedModel.ObjModel, RawModel> rawModelOf = objModel -> ((ObjModelAccess) (Object) objModel).atu$rawModel();
 		if (Perf.settings().fasterModelLoading && !atu$fastFailed) {
 			try {

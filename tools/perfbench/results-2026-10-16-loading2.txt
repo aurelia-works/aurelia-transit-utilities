@@ -1,0 +1,26 @@
+== ATU perf bench (perfload), 2026-10-16 evening: loading after a reload, then the camera away until MTR drops the train and back, once with render-thread loading and once with background loading.
+INFO 1 train siding(s), lengths [60]
+INFO siding 1 (60 m): NS Civity, 2 cars
+PASS NS trains placed - 1 siding(s)
+INFO 1 train(s), 2 cars, centre 351 -58 1
+INFO MTR loading                            model builds: 18, 1076 ms total on the render thread, of which 532 ms merge and upload; longest 0 ms; last -10.54 s after the reload
+INFO MTR loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 0 ms (any thread), 0 background builds, 0 files left to MTR's reader
+INFO ATU loading                            model builds: 18, 453 ms total on the render thread, of which 145 ms merge and upload; longest 0 ms; last -11.14 s after the reload
+INFO ATU loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 76 ms (any thread), 0 background builds, 0 files left to MTR's reader
+PASS door states share GPU buffers - 88 vertex arrays reused
+PASS ATU reads every NS train OBJ file - 0 left to MTR
+INFO MTR loading                            model builds: 18, 1202 ms total on the render thread, of which 703 ms merge and upload; longest 0 ms; last -10.49 s after the reload
+INFO MTR loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 0 ms (any thread), 0 background builds, 0 files left to MTR's reader
+INFO ATU loading                            model builds: 18, 738 ms total on the render thread, of which 152 ms merge and upload; longest 0 ms; last -10.94 s after the reload
+INFO ATU loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 328 ms (any thread), 0 background builds, 0 files left to MTR's reader
+PASS door states share GPU buffers - 88 vertex arrays reused
+PASS ATU reads every NS train OBJ file - 0 left to MTR
+PASS unused MTR models free their GPU arrays - 288 vertex arrays freed
+INFO shaders off, return, render-thread loading  40 m:  514.3 fps,   1.94 ms/frame,    222 MTR draws/frame,  0.37 ms in MTR renderer, 1 vehicles
+INFO return, render-thread loading          model builds: 18, 261 ms total on the render thread, longest 72 ms, last 1.50 s after coming back; 0 from a background parse
+PASS unused MTR models free their GPU arrays - 144 vertex arrays freed
+INFO shaders off, return, background loading  40 m:  512.7 fps,   1.95 ms/frame,    222 MTR draws/frame,  0.38 ms in MTR renderer, 1 vehicles
+INFO return, background loading             model builds: 28, 200 ms total on the render thread, longest 78 ms, last 1.40 s after coming back; 2 from a background parse
+PASS train models load in the background - 2 models built from a background parse
+RESULT PASS
+
