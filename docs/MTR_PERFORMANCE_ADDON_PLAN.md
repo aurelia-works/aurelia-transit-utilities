@@ -22,9 +22,9 @@ Fixes, best first:
 | Step | Fix | Gain (expected, to be measured) | Risk |
 |---|---|---|---|
 | D1 | **Merge parts per car**: one buffer per material (MTR's own `MaterialProperties`: shader, texture, colour, light) per part condition, instead of one per OBJ group × material. **Built.** Measured on the 56 models: 2,280 → 1,099 draws (2.1x), GPU data bitwise identical (`tools/objbench/results-draws-2026-10-16.txt`). Moving colour into the vertex data would only reach 1,003, because the NS packs use ~48 textures per car; not worth it. (MTR also has an unused `INSTANCE_BUFFER` attribute source that could draw all pieces of a 3D rail in one instanced call.) | 2.1x fewer train draws | Low: same geometry and materials |
-| D2 | **Shader-pack path**: bind the shader once per batch, and per draw upload only the model-matrix uniforms (`ModelViewMat` and Iris's `iris_ModelViewMatInverse` / `iris_NormalMat`, computed as Iris 1.7.6 does) directly. **Built**, not yet run in game | removes thousands of full Iris binds per frame | Medium: must be checked against Iris and a couple of shader packs |
-| D3 | Shadow pass draws the cheapest LOD tier, no interiors, no translucent parts | roughly halves the shader-pack cost | Low |
-| D4 | No per-draw `ByteBuffer` allocation; reuse one buffer | GC pressure | Low |
+| D2 | **Shader-pack path**: bind the shader once per batch, and per draw upload only the model-matrix uniforms (`ModelViewMat` and Iris's `iris_ModelViewMatInverse` / `iris_NormalMat`, computed as Iris 1.7.6 does) directly. **Built**, measured below | removes thousands of full Iris binds per frame | Medium: must be checked against Iris and a couple of shader packs |
+| D3 | Shadow pass draws the cheapest LOD tier, no interiors, no translucent parts. **Built** (`cheapShadows`) | roughly halves the shader-pack cost | Low |
+| D4 | No per-draw `ByteBuffer` allocation; reuse one buffer. **Built** | GC pressure | Low |
 
 Measured 2026-10-16 in a dev client (`./gradlew -PatuLwjgl331 runPerfbench`, results in `tools/perfbench/results-2026-10-16-run1.txt`): one 2-car NS Civity, camera 40 m away, Complementary Reimagined on Iris 1.7.6. All mixins applied, no errors; train looks the same with every fix on, with and without shaders.
 
@@ -40,7 +40,23 @@ Measured 2026-10-16 in a dev client (`./gradlew -PatuLwjgl331 runPerfbench`, res
 - About 235 draws a frame are not the train at all (rails and other MTR models): at 170 m with the train as a box, 235 remain. Rail LOD is the next biggest lever.
 - Train box tier (T2) shows correct size, position and colour at 170 m, shaders on and off.
 
-Status 2026-10-16 (first agent hour, no Minecraft): D1, D2, the F3 counters, the settings page and train LOD tiers T1 (no interior) and T2 (box, no load) are built and pass the build and unit tests; D1 is verified bitwise on 56 models headless. Nothing has run in game yet. D3/D4 and rail LOD are not built.
+Run 3, everything in this section plus rail LOD (`tools/perfbench/results-2026-10-16-run3.txt`), same scene:
+
+| 40 m | fps | ms/frame | ms in MTR renderer | MTR draws/frame |
+|---|---|---|---|---|
+| Shaders off, MTR only | 343 | 2.92 | 0.75 | 629 |
+| Shaders off, all fixes | 421 | 2.37 | 0.40 | 216 |
+| Shaders on, MTR only | 63 | 15.9 | 9.58 | 1,258 |
+| Shaders on, merge + fast path | 69 | 14.4 | 7.33 | 1,062 |
+| Shaders on, + cheap shadows | 76 | 13.1 | 5.01 | 615 |
+| Shaders on, all fixes | 78 | 12.8 | 3.13 | 300 |
+
+- At 170 m with all fixes: 30 draws without shaders, 60 with (MTR: 432 / 864); 102 fps with shaders against 66.
+- Run 2 had all fixes *slower* than MTR (53 fps with shaders): rail and train LOD asked MTR's `renderingShadows()` per rail piece and car part, and that walks the whole thread stack each call. `ShadowPass` now does that check once per MTR pass; run 3 shows the fix.
+- Along the track (camera 60 m behind the train) almost all visible rail is within 3 chunks, so rail LOD changes nothing there; that is by design.
+- Merge alone with shaders (no fast path) varies between runs (68 fps in run 2, 54 in run 3); it is not a shipping combination.
+
+Status 2026-10-16: D1–D4, train LOD (T1, T2), rail LOD (R1, R2, tall models, shadow tier), M2, M5 and a fast version of the merged build are built and measured in game. All self-test and unit tests pass.
 
 ## 2. What MTR 4.0.5 does today (from the jar)
 
@@ -117,5 +133,13 @@ Phase 1 is the visible win and the smallest. Measurement for it: the F3 counters
 ## 6. Decisions
 
 Decided 2026-10-16: lives in ATU (not a separate mod). Everything in this plan ships together as one 1.4.0 update (draw-call fixes, shadow tier, train and rail LOD, loading fixes, background loading), about 25–30 agent hours. Wait for the owner's go before continuing (Minecraft is in use by another agent).
+
+Loading, measured 2026-10-16 (`tools/perfbench/results-2026-10-16-loading.txt`, `./gradlew -PatuLwjgl331 runPerfbench` with `perfload` in `run/perf/atu_selftest_only.txt`):
+
+- **Fast merged build** (`FastMeshBuild`, part of M3): the per-car merge runs on primitive arrays instead of one `Vertex` per triangle corner. Headless on 56 models: byte-identical buffers, material order and indices for every placed list, 5.76 → 2.07 s (2.8x; `BENCH_ARGS=--fastbuild tools/objbench/run.sh cpu <packs>`). In game, after a resource reload: merge and upload 0.99–1.18 s → 0.45–0.46 s, all model builds 1.93–1.97 s → 1.10–1.35 s for the 18 models of the test scene. What is left is MTR's OBJ text parse (the FastObj half of M3, not built).
+- **M2** (no shader recompile per model) is built; it is skipped when JCM is loaded, which does the same.
+- **M5** (free unused models): MTR's `CachedResource` registry holds its entries weakly, and the GPU buffers of a dropped model are deleted at the end of a frame. In game, 80 s with the camera 3 km away: 226–678 vertex arrays freed; the train rebuilds and looks the same when the camera returns.
+- Found while checking: MTR's `generateNormals`/`distinct` edit the shared source models in place, so a car's second list (doors closed) is built from already processed data. Same triangles, different vertex order. The fast build always starts from the original data.
+- **Not built**: M1 (share uploads between door states; VRAM only), the FastObj parse (rest of M3), M4 (parsed-geometry cache and preload lifespan) and M6 (background parse).
 
 Decided 2026-10-16 (later): nothing is posted to MTR; ATU only works around P2, P4, P5, P6. Order: measure (0b), then draw-call fixes (phase 1), then LOD (1b), then loading fixes (2). Owner gave the go to launch a dev client.

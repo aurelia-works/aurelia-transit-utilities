@@ -1,0 +1,16 @@
+== ATU perf bench loading phase (perfload), 2026-10-16: model builds after a resource reload with MTR's mesh code vs ATU's fast build (merge on in both), alternating; then the camera 3 km away for 80 s so MTR drops its models.
+INFO 1 train siding(s), lengths [60]
+INFO siding 1 (60 m): NS Civity, 2 cars
+PASS NS trains placed - 1 siding(s)
+INFO 1 train(s), 2 cars, centre 351 -58 1
+INFO shaders off, MTR loading                40 m:  395.9 fps,   2.53 ms/frame,    216 MTR draws/frame,  0.49 ms in MTR renderer, 1 vehicles
+INFO MTR loading                            model builds: 18, 1928 ms total, of which 1179 ms merge and upload
+INFO shaders off, ATU loading                40 m:  425.1 fps,   2.35 ms/frame,    216 MTR draws/frame,  0.48 ms in MTR renderer, 1 vehicles
+INFO ATU loading                            model builds: 18, 1096 ms total, of which 452 ms merge and upload
+INFO shaders off, MTR loading                40 m:  418.7 fps,   2.39 ms/frame,    216 MTR draws/frame,  0.50 ms in MTR renderer, 1 vehicles
+INFO MTR loading                            model builds: 18, 1965 ms total, of which 988 ms merge and upload
+INFO shaders off, ATU loading                40 m:  424.5 fps,   2.36 ms/frame,    216 MTR draws/frame,  0.50 ms in MTR renderer, 1 vehicles
+INFO ATU loading                            model builds: 18, 1347 ms total, of which 464 ms merge and upload
+PASS unused MTR models free their GPU arrays - 678 vertex arrays freed
+INFO shaders off, after models were freed    40 m:  357.8 fps,   2.80 ms/frame,    216 MTR draws/frame,  0.54 ms in MTR renderer, 1 vehicles
+RESULT PASS

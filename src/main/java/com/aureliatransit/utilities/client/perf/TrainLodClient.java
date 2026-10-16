@@ -41,16 +41,20 @@ public final class TrainLodClient {
 		if (!vehicleQueue || state.matrix4f == null) {
 			return parts;
 		}
-		final int interiorChunks = Perf.settings().trainInteriorChunks;
-		if (interiorChunks <= 0) {
-			return parts;
-		}
-		// MTR builds the model matrix relative to the camera, so its translation is the car's distance from it. The
-		// ridden train is never this far: inside it the camera is within a car length.
-		final Matrix4f matrix = state.matrix4f.data;
-		final double distance = Math.sqrt(matrix.m30() * matrix.m30() + matrix.m31() * matrix.m31() + matrix.m32() * matrix.m32());
-		if (TrainLod.tier(distance, false, interiorChunks, 0) != TrainLod.Tier.NO_INTERIOR) {
-			return parts;
+		final PerfSettings settings = Perf.settings();
+		// Shadow pass (shader packs): MTR queues every car again; seats and poles inside a closed body add nothing.
+		if (!(settings.cheapShadows && ShadowPass.active())) {
+			final int interiorChunks = settings.trainInteriorChunks;
+			if (interiorChunks <= 0) {
+				return parts;
+			}
+			// MTR builds the model matrix relative to the camera, so its translation is the car's distance from it.
+			// The ridden train is never this far: inside it the camera is within a car length.
+			final Matrix4f matrix = state.matrix4f.data;
+			final double distance = Math.sqrt(matrix.m30() * matrix.m30() + matrix.m31() * matrix.m31() + matrix.m32() * matrix.m32());
+			if (TrainLod.tier(distance, false, interiorChunks, 0) != TrainLod.Tier.NO_INTERIOR) {
+				return parts;
+			}
 		}
 		return EXTERIOR_PARTS.computeIfAbsent(model, key -> {
 			final List<VertexArray> exterior = new ArrayList<>(parts.size());

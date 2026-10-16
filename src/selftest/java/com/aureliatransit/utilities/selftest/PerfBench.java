@@ -1,6 +1,7 @@
 package com.aureliatransit.utilities.selftest;
 
 import com.aureliatransit.utilities.client.MtrBridge;
+import com.aureliatransit.utilities.client.perf.GlGarbage;
 import com.aureliatransit.utilities.perf.Perf;
 import com.aureliatransit.utilities.perf.PerfSettings;
 import com.aureliatransit.utilities.preset.PresetCar;
@@ -46,6 +47,7 @@ final class PerfBench {
 	private static int wantedTrains;
 	private static Vec3d center = Vec3d.ZERO;
 	private static Vec3d side = new Vec3d(1, 0, 0);
+	private static Vec3d along = new Vec3d(0, 0, 1);
 
 	private static boolean sampling;
 	private static long frames;
@@ -59,14 +61,14 @@ final class PerfBench {
 	private PerfBench() {
 	}
 
-	static void addSteps(AtuSelfTest test) {
+	static void addSteps(AtuSelfTest test, boolean frameRates) {
 		WorldRenderEvents.END.register(context -> {
 			if (sampling) {
 				frames++;
 			}
 		});
 		test.act("start with every fix off", () -> {
-			configure(false, false, 0, 0);
+			configure(NONE);
 			shaders(false);
 			command("gamemode spectator");
 		});
@@ -76,61 +78,124 @@ final class PerfBench {
 		test.waitFor("NS trains parked", () -> nsTrains() >= wantedTrains, 120 * SECONDS);
 		test.act("find trains", () -> locate(test));
 
-		// Models loaded so far used whatever was set before; reload so the first runs are pure MTR.
-		reloadResources(test);
-		measureViews(test, "shaders off, MTR only", false);
-
-		test.act("merge on", () -> configure(true, false, 0, 0));
-		reloadResources(test);
-		measureViews(test, "shaders off, merge", false);
-
-		test.act("merge + LOD", () -> configure(true, false, 5, 10));
-		measureViews(test, "shaders off, merge + LOD 5/10", true);
-
-		test.act("shaders on", () -> {
-			configure(true, false, 0, 0);
-			shaders(true);
-		});
-		test.pause(10 * SECONDS);
-		measure(test, "shaders on, merge", 40);
-		test.act("fast path on", () -> configure(true, true, 0, 0));
-		measure(test, "shaders on, merge + fast path", 40);
-		test.act("fast path only", () -> configure(false, true, 0, 0));
-		reloadResources(test);
-		measure(test, "shaders on, fast path", 40);
-		test.act("every fix off", () -> configure(false, false, 0, 0));
-		measure(test, "shaders on, MTR only", 40);
-		test.act("all fixes", () -> configure(true, true, 5, 10));
-		reloadResources(test);
-		measureViews(test, "shaders on, merge + fast path + LOD 5/10", true);
-
-		test.act("shaders off again", () -> shaders(false));
+		if (frameRates) {
+			frameRates(test);
+		}
+		loading(test);
 		test.onFinish(() -> {
 			sampling = false;
-			configure(true, true, 5, 10);
+			configure(ALL);
+			Perf.settings().fasterModelLoading = true;
+			Perf.settings().freeUnusedModels = true;
 		});
 	}
 
-	private static void measureViews(AtuSelfTest test, String label, boolean screenshots) {
-		measure(test, label, 40);
-		if (screenshots) {
-			test.screenshot("perf_near_" + slug(label));
+	private static void frameRates(AtuSelfTest test) {
+		// Models loaded so far used whatever was set before; reload so the first runs are pure MTR.
+		reloadResources(test);
+		measureViews(test, "shaders off, MTR only", NONE, true);
+		test.act("merge", () -> configure(MERGE));
+		reloadResources(test);
+		measureViews(test, "shaders off, merge", MERGE, false);
+		measureViews(test, "shaders off, merge + train LOD", MERGE_TRAIN_LOD, false);
+		measureViews(test, "shaders off, all fixes", ALL, true);
+
+		test.act("shaders on", () -> {
+			configure(NONE);
+			shaders(true);
+		});
+		reloadResources(test);
+		measureViews(test, "shaders on, MTR only", NONE, true);
+		test.act("merge", () -> configure(MERGE));
+		reloadResources(test);
+		measure(test, "shaders on, merge", MERGE, 40);
+		measure(test, "shaders on, merge + fast path", MERGE_FAST, 40);
+		measure(test, "shaders on, + cheap shadows", MERGE_FAST_SHADOWS, 40);
+		measureViews(test, "shaders on, all fixes", ALL, true);
+
+		test.act("shaders off again", () -> shaders(false));
+	}
+
+	/**
+	 * Model builds after a resource reload with MTR's loading and with ATU's (fast merge, no shader recompile per
+	 * model), then the camera far away until MTR drops the unused models: their GPU arrays must be freed.
+	 */
+	private static void loading(AtuSelfTest test) {
+		for (final boolean fast : new boolean[]{false, true, false, true}) {
+			final String label = fast ? "ATU loading" : "MTR loading";
+			final long[] before = new long[1];
+			final double[] beforeMillis = new double[2];
+			// Counted from before the reload: MTR rebuilds the visible models one per tick right after it.
+			test.act(label, () -> {
+				configure(ALL);
+				Perf.settings().fasterModelLoading = fast;
+				before[0] = Perf.STATS.loads();
+				beforeMillis[0] = Perf.STATS.loadMillis();
+				beforeMillis[1] = Perf.STATS.mergeMillis();
+			});
+			reloadResources(test);
+			// Close enough for full detail: every car model and rail model gets built.
+			measure(test, "shaders off, " + label, ALL, 40);
+			test.act("builds " + label, () -> test.note(String.format(Locale.ROOT, "%-38s model builds: %d, %.0f ms total, of which %.0f ms merge and upload", label, Perf.STATS.loads() - before[0], Perf.STATS.loadMillis() - beforeMillis[0], Perf.STATS.mergeMillis() - beforeMillis[1])));
 		}
-		measure(test, label, 100);
-		if (screenshots) {
-			test.screenshot("perf_mid_" + slug(label));
-		}
-		measure(test, label, 170);
-		if (screenshots) {
-			test.screenshot("perf_far_" + slug(label));
+		final long[] freedBefore = new long[1];
+		test.act("camera far away", () -> {
+			freedBefore[0] = GlGarbage.freedArrays();
+			command(String.format(Locale.ROOT, "tp @s %.2f %.2f %.2f", center.x + 3000, center.y + 20, center.z + 3000));
+		});
+		// MTR drops a model after 60 s without use (CachedResource), then the Java objects must be collected.
+		test.pause(80 * SECONDS);
+		test.act("collect", System::gc);
+		test.pause(5 * SECONDS);
+		test.act("collect again", System::gc);
+		test.pause(5 * SECONDS);
+		test.act("freed GPU arrays", () -> {
+			final long freed = GlGarbage.freedArrays() - freedBefore[0];
+			test.check("unused MTR models free their GPU arrays", freed > 0, freed + " vertex arrays freed");
+		});
+		// Back again: MTR rebuilds the dropped models and the train must look as before.
+		measure(test, "shaders off, after models were freed", ALL, 40);
+		test.screenshot("perf_40_after_free");
+	}
+
+	/** Which fixes are on. Train LOD is interiors 5 / boxes 10 chunks, rail LOD flat 3 / far 8 chunks. */
+	private record Fixes(boolean merge, boolean fastPath, boolean cheapShadows, boolean trainLod, boolean railLod) {
+	}
+
+	private static final Fixes NONE = new Fixes(false, false, false, false, false);
+	private static final Fixes MERGE = new Fixes(true, false, false, false, false);
+	private static final Fixes MERGE_FAST = new Fixes(true, true, false, false, false);
+	private static final Fixes MERGE_FAST_SHADOWS = new Fixes(true, true, true, false, false);
+	private static final Fixes MERGE_TRAIN_LOD = new Fixes(true, false, false, true, false);
+	private static final Fixes ALL = new Fixes(true, true, true, true, true);
+
+	/** Side views at 40, 100 and 170 m, then a view along the track. Merge needs a resource reload to change. */
+	private static void measureViews(AtuSelfTest test, String label, Fixes fixes, boolean screenshots) {
+		for (final int distance : new int[]{40, 100, 170, -1}) {
+			measure(test, label, fixes, distance);
+			if (screenshots) {
+				test.screenshot("perf_" + (distance < 0 ? "track" : distance) + "_" + slug(label));
+			}
 		}
 	}
 
-	/** Camera {@code distance} blocks to the side of the trains, looking at them; settle, then count frames. */
-	private static void measure(AtuSelfTest test, String label, int distance) {
+	/**
+	 * Camera {@code distance} blocks to the side of the trains looking at them, or (distance -1) 3 blocks above the
+	 * track 60 m behind the train looking along it; settle, then count frames.
+	 */
+	private static void measure(AtuSelfTest test, String label, Fixes fixes, int distance) {
 		test.act("camera at " + distance, () -> {
-			final Vec3d eye = center.add(side.multiply(distance)).add(0, Math.max(8, distance * 0.25), 0);
-			command(String.format(Locale.ROOT, "tp @s %.2f %.2f %.2f facing %.2f %.2f %.2f", eye.x, eye.y, eye.z, center.x, center.y, center.z));
+			configure(fixes);
+			final Vec3d eye;
+			final Vec3d target;
+			if (distance < 0) {
+				eye = center.subtract(along.multiply(60)).add(0, 3, 0);
+				target = center.add(along.multiply(100));
+			} else {
+				eye = center.add(side.multiply(distance)).add(0, Math.max(8, distance * 0.25), 0);
+				target = center;
+			}
+			command(String.format(Locale.ROOT, "tp @s %.2f %.2f %.2f facing %.2f %.2f %.2f", eye.x, eye.y, eye.z, target.x, target.y, target.z));
 		});
 		test.pause(SETTLE_TICKS);
 		test.act("sample " + label + " " + distance, () -> {
@@ -155,7 +220,7 @@ final class PerfBench {
 			sampling = false;
 			final double seconds = (System.nanoTime() - sampleStart) / 1e9;
 			final double fps = frames / seconds;
-			test.note(String.format(Locale.ROOT, "%-45s %4d m: %6.1f fps, %6.2f ms/frame, %6.0f MTR draws/frame, %5.2f ms in MTR renderer, %d vehicles", label, distance, fps, 1000 / fps,
+			test.note(String.format(Locale.ROOT, "%-38s %5s: %6.1f fps, %6.2f ms/frame, %6.0f MTR draws/frame, %5.2f ms in MTR renderer, %d vehicles", label, distance < 0 ? "track" : distance + " m", fps, 1000 / fps,
 					statCount == 0 ? 0 : drawSum / statCount, statCount == 0 ? 0 : renderSum / statCount, trains().size()));
 			return true;
 		}, SAMPLE_TICKS + SECONDS);
@@ -258,6 +323,7 @@ final class PerfBench {
 		}
 		center = new Vec3d(x / n, y / n + 2, z / n);
 		if (along != null && along.lengthSquared() > 1e-6) {
+			PerfBench.along = along.normalize();
 			side = new Vec3d(-along.z, 0, along.x).normalize();
 		}
 		int cars = 0;
@@ -281,12 +347,15 @@ final class PerfBench {
 		return new ArrayList<>(MinecraftClientData.getInstance().vehicles);
 	}
 
-	private static void configure(boolean merge, boolean fastPath, int interiorChunks, int boxChunks) {
+	private static void configure(Fixes fixes) {
 		final PerfSettings settings = Perf.settings();
-		settings.mergeTrainParts = merge;
-		settings.shaderPackFastPath = fastPath;
-		settings.trainInteriorChunks = interiorChunks;
-		settings.trainBoxChunks = boxChunks;
+		settings.mergeTrainParts = fixes.merge();
+		settings.shaderPackFastPath = fixes.fastPath();
+		settings.cheapShadows = fixes.cheapShadows();
+		settings.trainInteriorChunks = fixes.trainLod() ? 5 : 0;
+		settings.trainBoxChunks = fixes.trainLod() ? 10 : 0;
+		settings.railSimpleChunks = fixes.railLod() ? 3 : 0;
+		settings.railFarChunks = fixes.railLod() ? 8 : 0;
 	}
 
 	/** Iris API by reflection: the self-test does not compile against Iris. */

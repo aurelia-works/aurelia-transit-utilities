@@ -20,12 +20,23 @@ public final class PerfSettings {
 	public boolean mergeTrainParts = true;
 	/** With a shader pack, bind the shader once per batch instead of once per draw call. */
 	public boolean shaderPackFastPath = true;
+	/** In a shader pack's shadow pass, train cars cast shadows from their exterior only and translucent parts cast none. */
+	public boolean cheapShadows = true;
+	/** MTR does not recompile its shaders for every model it loads (Joban Client Mod does the same; ATU then leaves it to JCM). */
+	public boolean fasterModelLoading = true;
+	/** Models MTR has dropped give their memory and GPU buffers back. */
+	public boolean freeUnusedModels = true;
 	/** ATU lines on the F3 screen: MTR draw calls and render time per frame. */
 	public boolean debugOverlay = true;
 	/** Train cars farther than this (chunks) are drawn without interior parts. 0 = never. */
 	public int trainInteriorChunks = 5;
 	/** Train cars farther than this (chunks) are drawn as a box and their model is not loaded. 0 = never. */
 	public int trainBoxChunks = 10;
+
+	/** 3D rail pieces farther than this (chunks) are drawn as flat rail strips; tall rail models keep their model. 0 = never. */
+	public int railSimpleChunks = 3;
+	/** 3D rail pieces farther than this (chunks) are drawn as one long strip (or stretched model) per few blocks. 0 = never. */
+	public int railFarChunks = 8;
 
 	/** Choices offered on the settings screen, in chunks; 0 means off. */
 	public static final int[] DISTANCE_CHOICES = {0, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 32};
@@ -43,9 +54,14 @@ public final class PerfSettings {
 		}
 		settings.mergeTrainParts = flag(properties, "mergeTrainParts", settings.mergeTrainParts);
 		settings.shaderPackFastPath = flag(properties, "shaderPackFastPath", settings.shaderPackFastPath);
+		settings.cheapShadows = flag(properties, "cheapShadows", settings.cheapShadows);
+		settings.fasterModelLoading = flag(properties, "fasterModelLoading", settings.fasterModelLoading);
+		settings.freeUnusedModels = flag(properties, "freeUnusedModels", settings.freeUnusedModels);
 		settings.debugOverlay = flag(properties, "debugOverlay", settings.debugOverlay);
 		settings.trainInteriorChunks = chunks(properties, "trainInteriorChunks", settings.trainInteriorChunks);
 		settings.trainBoxChunks = chunks(properties, "trainBoxChunks", settings.trainBoxChunks);
+		settings.railSimpleChunks = chunks(properties, "railSimpleChunks", settings.railSimpleChunks);
+		settings.railFarChunks = chunks(properties, "railFarChunks", settings.railFarChunks);
 		return settings;
 	}
 
@@ -53,9 +69,14 @@ public final class PerfSettings {
 		final Properties properties = new Properties();
 		properties.setProperty("mergeTrainParts", Boolean.toString(mergeTrainParts));
 		properties.setProperty("shaderPackFastPath", Boolean.toString(shaderPackFastPath));
+		properties.setProperty("cheapShadows", Boolean.toString(cheapShadows));
+		properties.setProperty("fasterModelLoading", Boolean.toString(fasterModelLoading));
+		properties.setProperty("freeUnusedModels", Boolean.toString(freeUnusedModels));
 		properties.setProperty("debugOverlay", Boolean.toString(debugOverlay));
 		properties.setProperty("trainInteriorChunks", Integer.toString(trainInteriorChunks));
 		properties.setProperty("trainBoxChunks", Integer.toString(trainBoxChunks));
+		properties.setProperty("railSimpleChunks", Integer.toString(railSimpleChunks));
+		properties.setProperty("railFarChunks", Integer.toString(railFarChunks));
 		Files.createDirectories(file.getParent());
 		try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
 			properties.store(writer, "Aurelia Transit Utilities: MTR performance fixes (true = on, false = MTR's own code)");

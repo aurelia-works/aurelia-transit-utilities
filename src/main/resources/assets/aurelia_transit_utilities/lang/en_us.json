@@ -235,6 +235,12 @@
 	"gui.aurelia_transit_utilities.perf.merge.tooltip": "Draws each MTR model (trains, 3D rails, objects) with one call per material instead of one per model part per material: about half the draw calls for trains. Applies to models loaded after the change; use Reload below for the rest.",
 	"gui.aurelia_transit_utilities.perf.shader": "Shader pack fast path: %s",
 	"gui.aurelia_transit_utilities.perf.shader.tooltip": "With a shader pack (Iris), MTR re-binds the whole shader for every part of every train and rail piece, every frame. This sets only the part's position instead. No effect without a shader pack.",
+	"gui.aurelia_transit_utilities.perf.shadows": "Cheaper train shadows: %s",
+	"gui.aurelia_transit_utilities.perf.shadows.tooltip": "With a shader pack, MTR draws every train a second time for shadows. This draws only the outside of each car for shadows, and windows and other see-through parts cast none. No effect without a shader pack.",
+	"gui.aurelia_transit_utilities.perf.loading": "Faster model loading: %s",
+	"gui.aurelia_transit_utilities.perf.loading.tooltip": "MTR recompiles its shaders every time a train model loads. This skips that outside resource reloads (Joban Client Mod does the same; with JCM installed this switch leaves it to JCM).",
+	"gui.aurelia_transit_utilities.perf.free": "Free unused models: %s",
+	"gui.aurelia_transit_utilities.perf.free.tooltip": "MTR drops a train model a minute after it was last drawn, but keeps its memory and GPU buffers for the rest of the session. This gives them back. Applies to models loaded after the change.",
 	"gui.aurelia_transit_utilities.perf.overlay": "F3 counters: %s",
 	"gui.aurelia_transit_utilities.perf.overlay.tooltip": "Shows MTR's draw calls and render time per frame on the F3 screen, to compare with the fixes on and off.",
 	"gui.aurelia_transit_utilities.perf.reload": "Reload resources (apply to loaded trains)",
@@ -242,6 +248,10 @@
 	"gui.aurelia_transit_utilities.perf.chunks": "%s chunks",
 	"gui.aurelia_transit_utilities.perf.interior": "Train interiors hidden beyond: %s",
 	"gui.aurelia_transit_utilities.perf.interior.tooltip": "Train cars farther away than this are drawn without seats, poles and other interior parts (MTR's interior render stages). Lights stay on.",
+	"gui.aurelia_transit_utilities.perf.rail_simple": "3D rails flat beyond: %s",
+	"gui.aurelia_transit_utilities.perf.rail_simple.tooltip": "3D rail pieces farther away than this are drawn as MTR's flat rail texture, which costs almost nothing, instead of one model per half block. Tall rail models (catenary, walls) keep their model.",
+	"gui.aurelia_transit_utilities.perf.rail_far": "3D rails simplest beyond: %s",
+	"gui.aurelia_transit_utilities.perf.rail_far.tooltip": "Beyond this, rails are drawn as one long flat strip per few blocks, and tall rail models as one stretched model per two blocks. With cheaper shadows on, shadows always use this.",
 	"gui.aurelia_transit_utilities.perf.box": "Trains drawn as boxes beyond: %s",
 	"gui.aurelia_transit_utilities.perf.box.tooltip": "Train cars farther away than this are drawn as a plain box in the train's colour, and their model is not loaded until they come closer. The train you ride is always drawn in full."
 }

@@ -4,6 +4,7 @@ import com.aureliatransit.utilities.client.MtrBridge;
 import com.aureliatransit.utilities.client.screen.AtuToolsScreen;
 import com.aureliatransit.utilities.client.screen.DepotHealthScreen;
 import com.aureliatransit.utilities.depot.DepotHealth;
+import com.aureliatransit.utilities.timetable.Timetable;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import org.mtr.core.data.Depot;
@@ -12,6 +13,7 @@ import org.mtr.core.data.VehicleCar;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** Depot health: a siding without a train is reported; Regenerate gives MTR's fresh result; train restored. */
@@ -71,6 +73,15 @@ final class DepotHealthSelfTest {
 			}
 			// Depot doctor: an empty timed list means no train ever leaves.
 			final Depot depot = MtrBridge.dashboardData().depotIdMap.get(depotId);
+			if (MtrBridge.hasNoDepartures(depot)) {
+				// A run killed between clearing and restoring leaves the test world without departures: seed a timetable.
+				test.note("test depot had no departures (left by an interrupted run); seeding one every 15 minutes");
+				final List<Long> seeded = new ArrayList<>();
+				for (long time = 0; time < Timetable.DAY; time += 15 * 60_000L) {
+					seeded.add(time);
+				}
+				MtrBridge.saveDepartures(depot, seeded);
+			}
 			originalRealTime = depot.getUseRealTime();
 			originalDepartures = new LongArrayList(depot.getRealTimeDepartures());
 			test.check("test depot has departures before", !MtrBridge.hasNoDepartures(depot), "");

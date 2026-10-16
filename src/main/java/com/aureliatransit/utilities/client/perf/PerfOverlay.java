@@ -15,7 +15,10 @@ public final class PerfOverlay {
 	}
 
 	public static void register() {
-		WorldRenderEvents.END.register(context -> Perf.STATS.frame(System.nanoTime()));
+		WorldRenderEvents.END.register(context -> {
+			Perf.STATS.frame(System.nanoTime());
+			GlGarbage.drain();
+		});
 	}
 
 	public static void addLines(List<String> lines) {
@@ -32,6 +35,7 @@ public final class PerfOverlay {
 			lines.add(String.format(Locale.ROOT, "[ATU] MTR draws/frame: %.0f", Perf.STATS.drawsPerFrame()));
 			lines.add(String.format(Locale.ROOT, "[ATU] MTR render: %.2f ms/frame", Perf.STATS.renderMillisPerFrame()));
 		}
+		lines.add(String.format(Locale.ROOT, "[ATU] MTR model builds: %d, %.0f ms total, longest %.0f ms; freed %d GPU arrays", Perf.STATS.loads(), Perf.STATS.loadMillis(), Perf.STATS.maxLoadMillis(), GlGarbage.freedArrays()));
 		lines.add(String.format(Locale.ROOT, "[ATU] merge %s, shader-pack path %s (%s)", onOff(settings.mergeTrainParts), onOff(settings.shaderPackFastPath), Utilities.canUseCustomShader() ? "no shader pack" : "shader pack"));
 	}
 

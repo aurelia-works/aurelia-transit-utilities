@@ -11,6 +11,7 @@ import org.mtr.mapping.render.model.RawMesh;
 import org.mtr.mapping.render.model.RawModel;
 import org.mtr.mapping.render.vertex.Vertex;
 
+import org.mtr.mapping.render.batch.MaterialProperties;
 import java.io.ByteArrayInputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -56,6 +57,7 @@ public final class Bench {
 				case "--threads" -> threads = Integer.parseInt(args[++i]);
 				case "--cold" -> coldOnly = true;
 				case "--draws" -> System.setProperty("drawsOnly", "true");
+				case "--fastbuild" -> System.setProperty("fastBuildOnly", "true");
 				default -> packs.add(Path.of(args[i]));
 			}
 		}
@@ -66,6 +68,10 @@ public final class Bench {
 		System.out.printf("JVM %s, %d cores, max heap %d MB, %d OBJ vehicle models%n", System.getProperty("java.version"), Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().maxMemory() >> 20, jobs.size());
 		if (System.getProperty("drawsOnly") != null) {
 			drawReport(jobs);
+			return;
+		}
+		if (System.getProperty("fastBuildOnly") != null) {
+			fastBuildReport(jobs, runs);
 			return;
 		}
 
@@ -531,6 +537,166 @@ public final class Bench {
 			}
 		}
 		return "identical (" + buffers[0] + " -> " + buffers[1] + " buffers)";
+	}
+
+	/** Every placed list (doors open and closed, every part condition) of one vehicle, from freshly loaded OBJ groups. */
+	static Map<String, List<OptimizedModel.ObjModel>> placedLists(Job job) {
+		final String objString = new String(read(job.packRoot, id(formatWithDefault(job.modelResource, "obj"))), StandardCharsets.UTF_8);
+		final Map<String, OptimizedModel.ObjModel> objModels = OptimizedModel.ObjModel.loadModel(objString, mtl -> new String(read(job.packRoot, id(sameDir(job.modelResource, mtl, "mtl"))), StandardCharsets.UTF_8), texture -> resolveTexture(job, texture), null, true, job.flipV);
+		final Map<String, List<OptimizedModel.ObjModel>> lists = new LinkedHashMap<>();
+		for (final PartPlacement placement : placements(job)) {
+			final OptimizedModel.ObjModel objModel = objModels.get(placement.name);
+			if (objModel != null) {
+				objModel.addTransformation(OptimizedModel.ShaderType.values()[placement.shader], placement.x, placement.y, placement.z, placement.flipped);
+				lists.computeIfAbsent(placement.map + "/" + placement.condition, k -> new ArrayList<>()).add(objModel);
+			}
+		}
+		return lists;
+	}
+
+	static final org.mtr.mapping.render.vertex.VertexAttributeMapping MAPPING;
+
+	static {
+		try {
+			final Field field = OptimizedModel.class.getDeclaredField("DEFAULT_MAPPING");
+			field.setAccessible(true);
+			MAPPING = (org.mtr.mapping.render.vertex.VertexAttributeMapping) field.get(null);
+		} catch (ReflectiveOperationException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/** ATU's merge through MTR's own mesh code, then exactly what RawMesh.upload(Mesh, mapping) packs, in order. */
+	static List<Object[]> referencePack(List<OptimizedModel.ObjModel> list) {
+		final List<Object[]> result = new ArrayList<>();
+		com.aureliatransit.utilities.perf.MergedObjUpload.merge(list, Bench::rawModel).iterateRawMeshList(rawMesh -> {
+			if (!rawMesh.hasFaces()) {
+				return;
+			}
+			rawMesh.validateVertexIndex();
+			rawMesh.distinct();
+			final ByteBuffer vertices = ByteBuffer.allocate(rawMesh.vertices.size() * MAPPING.strideVertex).order(ByteOrder.nativeOrder());
+			for (final Vertex vertex : rawMesh.vertices) {
+				if (MAPPING.sources.get(org.mtr.mapping.render.vertex.VertexAttributeType.POSITION) == org.mtr.mapping.render.vertex.VertexAttributeSource.VERTEX_BUFFER) {
+					vertices.putFloat(vertex.position.getX()).putFloat(vertex.position.getY()).putFloat(vertex.position.getZ());
+				}
+				if (MAPPING.sources.get(org.mtr.mapping.render.vertex.VertexAttributeType.COLOR) == org.mtr.mapping.render.vertex.VertexAttributeSource.VERTEX_BUFFER) {
+					vertices.putInt(vertex.color);
+				}
+				if (MAPPING.sources.get(org.mtr.mapping.render.vertex.VertexAttributeType.UV_TEXTURE) == org.mtr.mapping.render.vertex.VertexAttributeSource.VERTEX_BUFFER) {
+					vertices.putFloat(vertex.u).putFloat(vertex.v);
+				}
+				if (MAPPING.sources.get(org.mtr.mapping.render.vertex.VertexAttributeType.UV_LIGHTMAP) == org.mtr.mapping.render.vertex.VertexAttributeSource.VERTEX_BUFFER) {
+					vertices.putInt(vertex.light);
+				}
+				if (MAPPING.sources.get(org.mtr.mapping.render.vertex.VertexAttributeType.NORMAL) == org.mtr.mapping.render.vertex.VertexAttributeSource.VERTEX_BUFFER) {
+					final org.joml.Vector3f normal = new org.joml.Vector3f(vertex.normal.getX(), vertex.normal.getY(), vertex.normal.getZ()).normalize();
+					vertices.put((byte) (normal.x * 127.0f)).put((byte) (normal.y * 127.0f)).put((byte) (normal.z * 127.0f));
+				}
+				if (MAPPING.paddingVertex > 0) {
+					vertices.put((byte) 0);
+				}
+			}
+			final int[] indices = rawMesh.faces.stream().flatMapToInt(face -> Arrays.stream(face.vertices)).toArray();
+			result.add(new Object[]{rawMesh.materialProperties, vertices.array(), indices, rawMesh.faces.size()});
+		});
+		return result;
+	}
+
+	/** FastMeshBuild against ATU's merge through MTR's mesh code: same buffers in the same order, and the time each takes. */
+	static String describe(Object[] packed) {
+		final MaterialProperties m = (MaterialProperties) packed[0];
+		return m.shaderType + " translucent " + m.translucent + " hash " + m.hashCode() + " vbytes " + ((byte[]) packed[1]).length + " faces " + packed[3];
+	}
+
+	static String compare(String key, List<Object[]> reference, List<Object[]> other) {
+		if (other.size() != reference.size()) {
+			return "DIFFERENT mesh count in " + key;
+		}
+		for (int i = 0; i < other.size(); i++) {
+			final Object[] r = reference.get(i);
+			final Object[] o = other.get(i);
+			if (!r[0].equals(o[0])) {
+				return "DIFFERENT material order in " + key;
+			}
+			if (!Arrays.equals((byte[]) r[1], (byte[]) o[1])) {
+				return "DIFFERENT vertex bytes in " + key + " mesh " + i;
+			}
+			if (!Arrays.equals((int[]) r[2], (int[]) o[2]) || (int) r[3] != (int) o[3]) {
+				return "DIFFERENT indices in " + key + " mesh " + i;
+			}
+		}
+		return "IDENTICAL";
+	}
+
+	static void fastBuildReport(List<Job> jobs, int runs) {
+		System.out.println("\n== FastMeshBuild vs merge through MTR's mesh code (normals, distinct, append, distinct, pack), every placed list");
+		System.out.printf("  %-60s %6s %10s %10s %8s  %s%n", "model", "lists", "MTR ms", "fast ms", "speedup", "check");
+		double sumReference = 0, sumFast = 0;
+		int identical = 0;
+		for (final Job job : jobs) {
+			final Map<String, List<OptimizedModel.ObjModel>> referenceLists = placedLists(job);
+			String verdict = "IDENTICAL";
+			String control = "IDENTICAL";
+			// The fast path never edits its source models, so one load serves every list.
+			final Map<String, List<OptimizedModel.ObjModel>> fastLists = placedLists(job);
+			for (final String key : referenceLists.keySet()) {
+				// A fresh load per list: MTR's mesh code edits the shared source models in place, so a second list built from
+				// the same load starts from already processed data.
+				final List<Object[]> reference = referencePack(placedLists(job).get(key));
+				// Control: MTR's own path on a second load must match the first, or the comparison itself is not meaningful.
+				if (control.equals("IDENTICAL")) {
+					control = compare(key, reference, referencePack(placedLists(job).get(key)));
+				}
+				final List<com.aureliatransit.utilities.perf.FastMeshBuild.Packed> fastPacked = com.aureliatransit.utilities.perf.FastMeshBuild.pack(fastLists.get(key), Bench::rawModel, MAPPING);
+				if (fastPacked == null) {
+					verdict = "NULL in " + key;
+					break;
+				}
+				final List<Object[]> fast = new ArrayList<>();
+				fastPacked.forEach(f -> fast.add(new Object[]{f.materialProperties, f.vertexBytes, f.indices, f.faceCount}));
+				verdict = compare(key, reference, fast);
+				if (System.getenv("FASTBUILD_DEBUG") != null && !verdict.equals("IDENTICAL")) {
+					for (int i = 0; i < Math.max(reference.size(), fast.size()); i++) {
+						System.out.println("    " + i + " MTR  " + (i < reference.size() ? describe(reference.get(i)) : "-"));
+						System.out.println("    " + i + " fast " + (i < fast.size() ? describe(fast.get(i)) : "-"));
+					}
+				}
+				if (!verdict.equals("IDENTICAL")) {
+					break;
+				}
+			}
+			if (!control.equals("IDENTICAL")) {
+				verdict += " (control: MTR vs MTR " + control + ")";
+			}
+			if (verdict.equals("IDENTICAL")) {
+				identical++;
+			}
+			final double[] referenceTimes = new double[runs];
+			final double[] fastTimes = new double[runs];
+			for (int r = -2; r < runs; r++) {
+				final Map<String, List<OptimizedModel.ObjModel>> a = placedLists(job);
+				long start = System.nanoTime();
+				a.values().forEach(Bench::referencePack);
+				final double referenceMs = (System.nanoTime() - start) / 1e6;
+				final Map<String, List<OptimizedModel.ObjModel>> b = placedLists(job);
+				start = System.nanoTime();
+				b.values().forEach(list -> com.aureliatransit.utilities.perf.FastMeshBuild.pack(list, Bench::rawModel, MAPPING));
+				final double fastMs = (System.nanoTime() - start) / 1e6;
+				if (r >= 0) {
+					referenceTimes[r] = referenceMs;
+					fastTimes[r] = fastMs;
+				}
+			}
+			Arrays.sort(referenceTimes);
+			Arrays.sort(fastTimes);
+			final double referenceMedian = referenceTimes[runs / 2];
+			final double fastMedian = fastTimes[runs / 2];
+			sumReference += referenceMedian;
+			sumFast += fastMedian;
+			System.out.printf("  %-60s %6d %10.1f %10.1f %7.1fx  %s%n", job.label(), referenceLists.size(), referenceMedian, fastMedian, referenceMedian / fastMedian, verdict);
+		}
+		System.out.printf("  %-60s %6s %10.1f %10.1f %7.1fx  %d/%d identical%n", "SUM", "", sumReference, sumFast, sumReference / sumFast, identical, jobs.size());
 	}
 
 	/** What RawMesh.upload would put in the buffers (distinct, then 24-byte vertices), as 72-byte triangles. */

@@ -43,9 +43,9 @@ public final class AtuSelfTest implements ClientModInitializer {
 	public void onInitializeClient() {
 		// run/selftest/atu_selftest_only.txt containing "announcer" runs only the platform calls and the announcer ride
 		// (they take minutes).
-		// "perf" runs only the MTR performance benchmark (run/perf, see PerfBench).
-		if (onlyMode().equals("perf")) {
-			PerfBench.addSteps(this);
+		// "perf" runs only the MTR performance benchmark (run/perf, see PerfBench); "perfload" only its loading part.
+		if (onlyMode().equals("perf") || onlyMode().equals("perfload")) {
+			PerfBench.addSteps(this, onlyMode().equals("perf"));
 			ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
 			ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 			return;

@@ -13,12 +13,45 @@ public final class PerfStats {
 	private int frames;
 	private long windowStart = -1;
 
+	private long loads;
+	private long loadNanos;
+	private long maxLoadNanos;
+	private long mergeNanos;
+
 	private double drawsPerFrame;
 	private double renderMillisPerFrame;
 	private boolean hasResult;
 
 	public void draw() {
 		draws++;
+	}
+
+	/** One MTR model build (OBJ parse and upload) on the render thread. */
+	public void load(long nanos) {
+		loads++;
+		loadNanos += nanos;
+		maxLoadNanos = Math.max(maxLoadNanos, nanos);
+	}
+
+	/** The merge and upload part of a model build (ATU's merged upload only). */
+	public void merge(long nanos) {
+		mergeNanos += nanos;
+	}
+
+	public double mergeMillis() {
+		return mergeNanos / 1e6;
+	}
+
+	public long loads() {
+		return loads;
+	}
+
+	public double loadMillis() {
+		return loadNanos / 1e6;
+	}
+
+	public double maxLoadMillis() {
+		return maxLoadNanos / 1e6;
 	}
 
 	public void render(long nanos) {

@@ -10,4 +10,10 @@ public interface ObjModelAccess {
 
 	@Accessor("rawModel")
 	RawModel atu$rawModel();
+
+	@Accessor("minY")
+	float atu$minY();
+
+	@Accessor("maxY")
+	float atu$maxY();
 }

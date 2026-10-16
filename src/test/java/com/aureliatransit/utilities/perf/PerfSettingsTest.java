@@ -20,6 +20,7 @@ class PerfSettingsTest {
 		assertTrue(settings.mergeTrainParts);
 		assertTrue(settings.shaderPackFastPath);
 		assertTrue(settings.debugOverlay);
+		assertTrue(settings.cheapShadows);
 	}
 
 	@Test
@@ -28,11 +29,13 @@ class PerfSettingsTest {
 		final PerfSettings settings = new PerfSettings();
 		settings.mergeTrainParts = false;
 		settings.debugOverlay = false;
+		settings.cheapShadows = false;
 		settings.save(file);
 		final PerfSettings loaded = PerfSettings.load(file);
 		assertFalse(loaded.mergeTrainParts);
 		assertTrue(loaded.shaderPackFastPath);
 		assertFalse(loaded.debugOverlay);
+		assertFalse(loaded.cheapShadows);
 	}
 
 	@Test

@@ -1,10 +1,16 @@
 package com.aureliatransit.utilities.perf;
 
 import org.mtr.mapping.mapper.OptimizedModel;
+import org.mtr.mapping.render.model.Mesh;
 import org.mtr.mapping.render.model.RawModel;
+import org.mtr.mapping.render.object.IndexBuffer;
 import org.mtr.mapping.render.object.VertexArray;
+import org.mtr.mapping.render.object.VertexBuffer;
+import org.mtr.mapping.render.tool.OffHeapAllocator;
 import org.mtr.mapping.render.vertex.VertexAttributeMapping;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -23,11 +29,43 @@ import java.util.function.Function;
  */
 public final class MergedObjUpload {
 
+	/** {@code GL_UNSIGNED_INT}, MTR's index type. */
+	private static final int GL_UNSIGNED_INT = 5125;
+
 	private MergedObjUpload() {
 	}
 
 	public static List<VertexArray> upload(Collection<OptimizedModel.ObjModel> objModels, Function<OptimizedModel.ObjModel, RawModel> rawModelOf, VertexAttributeMapping mapping) {
 		return merge(objModels, rawModelOf).upload(mapping);
+	}
+
+	/**
+	 * Same buffers as {@link #upload}, built by {@link FastMeshBuild}; null when that refuses the data (MTR's own path
+	 * should then run). Render thread.
+	 */
+	public static List<VertexArray> uploadFast(Collection<OptimizedModel.ObjModel> objModels, Function<OptimizedModel.ObjModel, RawModel> rawModelOf, VertexAttributeMapping mapping) {
+		final List<FastMeshBuild.Packed> packedMeshes = FastMeshBuild.pack(objModels, rawModelOf, mapping);
+		if (packedMeshes == null) {
+			return null;
+		}
+		final List<VertexArray> vertexArrays = new ArrayList<>(packedMeshes.size());
+		for (final FastMeshBuild.Packed packed : packedMeshes) {
+			final VertexBuffer vertexBuffer = new VertexBuffer();
+			final IndexBuffer indexBuffer = new IndexBuffer(packed.faceCount, GL_UNSIGNED_INT);
+			final ByteBuffer vertices = OffHeapAllocator.allocate(packed.vertexBytes.length);
+			vertices.put(packed.vertexBytes);
+			vertexBuffer.upload(vertices, VertexBuffer.USAGE_STATIC_DRAW);
+			OffHeapAllocator.free(vertices);
+			final ByteBuffer indices = OffHeapAllocator.allocate(packed.indices.length * 4);
+			for (final int index : packed.indices) {
+				indices.putInt(index);
+			}
+			indexBuffer.upload(indices, VertexBuffer.USAGE_STATIC_DRAW);
+			indexBuffer.setFaceCount(packed.faceCount);
+			OffHeapAllocator.free(indices);
+			vertexArrays.add(new VertexArray(new Mesh(vertexBuffer, indexBuffer, packed.materialProperties), mapping));
+		}
+		return vertexArrays;
 	}
 
 	/** The merged model before upload. Steps per group are MTR's own: normals, then de-duplication. */

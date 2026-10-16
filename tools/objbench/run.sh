@@ -18,7 +18,7 @@ CP="$CP:$(find $C/com.mojang -name '*.jar' ! -name '*sources*' ! -name '*javadoc
 CP="$CP:$L/lwjgl/3.3.1/lwjgl-3.3.1.jar:$L/lwjgl-opengl/3.3.1/lwjgl-opengl-3.3.1.jar:$L/lwjgl-natives-macos-arm64/3.3.1/lwjgl-natives-macos-arm64-3.3.1.jar:$L/lwjgl-opengl-natives-macos-arm64/3.3.1/lwjgl-opengl-natives-macos-arm64-3.3.1.jar"
 OUT=$HERE/out
 mkdir -p $OUT
-$JH/bin/javac -nowarn -d $OUT -cp "$CP" $HERE/src/*.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/MergedObjUpload.java
+$JH/bin/javac -nowarn -d $OUT -cp "$CP" $HERE/src/*.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/MergedObjUpload.java $HERE/../../src/main/java/com/aureliatransit/utilities/perf/FastMeshBuild.java
 MODE=$1
 shift
 if [[ $MODE == gl ]]; then

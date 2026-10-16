@@ -1,11 +1,15 @@
 # Changelog
 
-## 1.4.0 (not released, not yet tested in game)
+## 1.4.0 (not released)
 - New **Performance** page in the ATU hub with fixes for MTR 4.0.5's renderer. Each is a switch; off runs MTR's own code. Saved in `config/aurelia_transit_utilities_performance.properties`. Only active on MTR 4.0.5; on any other version they stay off.
 - Merge train parts: each MTR model is uploaded as one buffer per material instead of one per OBJ group per material. About half the draw calls for OBJ trains (2,280 → 1,099 on 56 test models), same geometry.
 - Shader pack fast path: with Iris, MTR re-bound the whole shader for every draw call; now only the part's matrix uniforms are set inside a batch.
 - Train LOD: cars beyond a distance (default 5 chunks) are drawn without interior parts; beyond another (default 10 chunks) as a plain box in the vehicle's colour, without loading the model. The ridden train is always full.
-- F3 lines: MTR draw calls and render time per frame.
+- Rail LOD: 3D rail pieces beyond a distance (default 3 chunks) are drawn as MTR's flat rail strips, which MTR batches; beyond another (default 8 chunks) one strip covers 4 blocks. Rail models taller than half a block (catenary, walls) keep their 3D model and are only thinned far away.
+- Cheaper shadows with shader packs: in the shadow pass MTR skips translucent parts, cars always use their exterior parts, and rails use the far tier.
+- Faster model loading: train models are merged in primitive arrays instead of one Java object per triangle corner (2.8x faster on 56 test models, byte-identical buffers), and MTR no longer recompiles its shaders for every model it loads.
+- Frees unused models: MTR's model cache stops holding every model forever, and the GPU buffers of a dropped model are deleted (MTR left them allocated).
+- F3 lines: MTR draw calls and render time per frame, model builds and freed GPU arrays.
 - This is the first ATU version with mixins into MTR (client-side, rendering only).
 
 ## 1.3.0
