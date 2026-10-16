@@ -1,0 +1,19 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "com.aureliatransit.utilities.mixin",
+	"plugin": "com.aureliatransit.utilities.mixin.AtuMixinPlugin",
+	"compatibilityLevel": "JAVA_17",
+	"client": [
+		"DebugHudMixin",
+		"mtr.ObjModelAccess",
+		"mtr.OptimizedModelMixin",
+		"mtr.OptimizedRendererMixin",
+		"mtr.RenderVehiclesMixin",
+		"mtr.ShaderManagerMixin",
+		"mtr.VertexArrayMixin",
+		"mtr.VehicleResourceQueueMixin",
+		"mtr.VertexAttributeStateMixin"
+	],
+	"injectors": {"defaultRequire": 0}
+}

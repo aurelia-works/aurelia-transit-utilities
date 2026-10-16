@@ -226,5 +226,22 @@
 	"gui.aurelia_transit_utilities.depots.platform_on_route": "platform %s (route %s)",
 	"gui.aurelia_transit_utilities.depots.problem.no_departures": "Has no departures: the timed list is empty, or every hour is set to no trains. No train will ever leave.",
 	"gui.aurelia_transit_utilities.depots.problem.siding_isolated": "Siding %s has no track leading out of it, so its trains cannot reach the route. (Checked for sidings within render distance only.)",
-	"gui.aurelia_transit_utilities.depots.problem.platform_no_station": "Stops at %s, which is in no station zone: departure screens and announcements show nothing there."
+	"gui.aurelia_transit_utilities.depots.problem.platform_no_station": "Stops at %s, which is in no station zone: departure screens and announcements show nothing there.",
+	"gui.aurelia_transit_utilities.tools.performance": "Performance",
+	"gui.aurelia_transit_utilities.perf.title": "MTR performance",
+	"gui.aurelia_transit_utilities.perf.active": "Fixes for MTR 4.0.5's renderer. Off = MTR's own code.",
+	"gui.aurelia_transit_utilities.perf.unchecked": "This MTR version was not checked: the fixes stay off.",
+	"gui.aurelia_transit_utilities.perf.merge": "Merge train parts: %s",
+	"gui.aurelia_transit_utilities.perf.merge.tooltip": "Draws each MTR model (trains, 3D rails, objects) with one call per material instead of one per model part per material: about half the draw calls for trains. Applies to models loaded after the change; use Reload below for the rest.",
+	"gui.aurelia_transit_utilities.perf.shader": "Shader pack fast path: %s",
+	"gui.aurelia_transit_utilities.perf.shader.tooltip": "With a shader pack (Iris), MTR re-binds the whole shader for every part of every train and rail piece, every frame. This sets only the part's position instead. No effect without a shader pack.",
+	"gui.aurelia_transit_utilities.perf.overlay": "F3 counters: %s",
+	"gui.aurelia_transit_utilities.perf.overlay.tooltip": "Shows MTR's draw calls and render time per frame on the F3 screen, to compare with the fixes on and off.",
+	"gui.aurelia_transit_utilities.perf.reload": "Reload resources (apply to loaded trains)",
+	"gui.aurelia_transit_utilities.perf.reload.tooltip": "Same as F3+T: reloads resource packs so every train is rebuilt with the current settings. Takes a while with large packs.",
+	"gui.aurelia_transit_utilities.perf.chunks": "%s chunks",
+	"gui.aurelia_transit_utilities.perf.interior": "Train interiors hidden beyond: %s",
+	"gui.aurelia_transit_utilities.perf.interior.tooltip": "Train cars farther away than this are drawn without seats, poles and other interior parts (MTR's interior render stages). Lights stay on.",
+	"gui.aurelia_transit_utilities.perf.box": "Trains drawn as boxes beyond: %s",
+	"gui.aurelia_transit_utilities.perf.box.tooltip": "Train cars farther away than this are drawn as a plain box in the train's colour, and their model is not loaded until they come closer. The train you ride is always drawn in full."
 }

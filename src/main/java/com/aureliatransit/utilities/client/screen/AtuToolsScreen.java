@@ -36,7 +36,8 @@ public final class AtuToolsScreen extends Screen {
 			new Tool("speed", false, SpeedAuditScreen::new),
 			new Tool("trains", false, TrainInspectorScreen::new),
 			// /tp permission is checked by the server; the screen says so when the player lacks it.
-			new Tool("jump", false, JumpScreen::new)
+			new Tool("jump", false, JumpScreen::new),
+			new Tool("performance", false, PerformanceScreen::new)
 	);
 
 	private final Screen parent;

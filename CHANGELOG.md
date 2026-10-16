@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0 (not released, not yet tested in game)
+- New **Performance** page in the ATU hub with fixes for MTR 4.0.5's renderer. Each is a switch; off runs MTR's own code. Saved in `config/aurelia_transit_utilities_performance.properties`. Only active on MTR 4.0.5; on any other version they stay off.
+- Merge train parts: each MTR model is uploaded as one buffer per material instead of one per OBJ group per material. About half the draw calls for OBJ trains (2,280 → 1,099 on 56 test models), same geometry.
+- Shader pack fast path: with Iris, MTR re-bound the whole shader for every draw call; now only the part's matrix uniforms are set inside a batch.
+- Train LOD: cars beyond a distance (default 5 chunks) are drawn without interior parts; beyond another (default 10 chunks) as a plain box in the vehicle's colour, without loading the model. The ridden train is always full.
+- F3 lines: MTR draw calls and render time per frame.
+- This is the first ATU version with mixins into MTR (client-side, rendering only).
+
 ## 1.3.0
 - Return route: builds the opposite direction of a route (stops reversed, other platform of each station, ends keep theirs); every stop can be switched before saving; optionally added to the same depots.
 - Speed check: read-only list of slow spots and too-fast curves in the loaded rails, with Jump.

@@ -1,5 +1,6 @@
 package com.aureliatransit.utilities.client;
 
+import com.aureliatransit.utilities.client.perf.PerfOverlay;
 import com.aureliatransit.utilities.client.screen.AtuToolsScreen;
 import java.lang.reflect.Method;
 import net.fabricmc.api.ClientModInitializer;
@@ -45,6 +46,7 @@ public final class AureliaTransitUtilitiesClient implements ClientModInitializer
 			}
 		});
 		Announcer.register();
+		PerfOverlay.register();
 		LOGGER.info("[ATU] Client initialised");
 	}
 

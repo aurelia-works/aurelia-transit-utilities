@@ -1,0 +1,184 @@
+JVM 21.0.7, 8 cores, max heap 2048 MB, 56 OBJ vehicle models
+
+== Equivalence (MTR 4.0.5 upload data vs FastObj, per model, bitwise on sorted triangles)
+  septa_m4.obj (septa_m4_cab_1)                                IDENTICAL (16 groups, 14767 triangles)
+  septa_m4_bogie.obj (septa_m4_cab_1)                          IDENTICAL (1 groups, 696 triangles)
+  septa_m4.obj (septa_m4_cab_2)                                IDENTICAL (16 groups, 14767 triangles)
+  septa_xcelsior_xde40.obj (septa_xcelsior_xde40_pack)         IDENTICAL (32 groups, 14901 triangles)
+  carriage1.obj (metrolink_m5000_cab_1)                        IDENTICAL (14 groups, 22398 triangles)
+  coupler.obj (metrolink_m5000_cab_1_open_coupler)             IDENTICAL (12 groups, 23792 triangles)
+  middle_sections.obj (metrolink_m5001_trailer)                IDENTICAL (1 groups, 1964 triangles)
+  carriage2.obj (metrolink_m5002_cab_2)                        IDENTICAL (14 groups, 23330 triangles)
+  coupler1.obj (metrolink_m5002_cab_2_open_coupler)            IDENTICAL (12 groups, 24724 triangles)
+  carriage2_lower_panto.obj (metrolink_m5002_cab_3)            IDENTICAL (14 groups, 23330 triangles)
+  coupler3.obj (metrolink_m5002_cab_3_open_coupler)            IDENTICAL (12 groups, 24724 triangles)
+  ns_sng_civity_mc.obj (mtr_custom_train_ns_sng_civity_mc_cab_1) IDENTICAL (33 groups, 70666 triangles)
+  ns_sng_civity_mc_back.obj (mtr_custom_train_ns_sng_civity_mc_back_cab_2) IDENTICAL (33 groups, 66566 triangles)
+  ns_sng_civity_mc_y.obj (mtr_custom_train_ns_sng_civity_mc_cab_y_1) IDENTICAL (33 groups, 70666 triangles)
+  ns_sng_civity_mc_back_y.obj (mtr_custom_train_ns_sng_civity_mc_back_cab_y_2) IDENTICAL (33 groups, 66566 triangles)
+  ns_sng_civity_p.obj (mtr_custom_train_ns_sng_civity_p_6m_trailer) IDENTICAL (31 groups, 47535 triangles)
+  ns_sng_civity_p.obj (mtr_custom_train_ns_sng_civity_p_5m_trailer) IDENTICAL (31 groups, 46218 triangles)
+  ns_sng_civity_m.obj (mtr_custom_train_ns_sng_civity_m_trailer) IDENTICAL (29 groups, 57300 triangles)
+  ns_1700.obj (mtr_custom_train_ns_1700_cab_6m)                IDENTICAL (18 groups, 37670 triangles)
+  ns_1700.obj (mtr_custom_train_ns_1700_cab_5m)                IDENTICAL (17 groups, 37641 triangles)
+  nsicmcarriage.obj (mtr_custom_train_icm_carriage_srt)        IDENTICAL (29 groups, 48535 triangles)
+  nsicmcarriage_first.obj (mtr_custom_train_icm_carriage_first_srt) IDENTICAL (28 groups, 60672 triangles)
+  nsicmcarriage_second.obj (mtr_custom_train_icm_carriage_second_srt) IDENTICAL (26 groups, 41292 triangles)
+  nsicmfront_gangway.obj (mtr_custom_train_icm_front_5m_gangway_srt) IDENTICAL (33 groups, 42840 triangles)
+  nsicmfront_gangway.obj (mtr_custom_train_icm_front_6m_gangway_srt) IDENTICAL (33 groups, 43697 triangles)
+  nsicmfront_gangway_back.obj (mtr_custom_train_icm_back_gangway_srt) IDENTICAL (32 groups, 38482 triangles)
+  nsicmfront.obj (mtr_custom_train_icm_front_5m_srt)           IDENTICAL (33 groups, 42512 triangles)
+  nsicmfront.obj (mtr_custom_train_icm_front_6m_srt)           IDENTICAL (33 groups, 43369 triangles)
+  nsicmfront_back.obj (mtr_custom_train_icm_back_srt)          IDENTICAL (32 groups, 38154 triangles)
+  nsicmmfront.obj (mtr_custom_train_icmm_front_5m_srt)         IDENTICAL (33 groups, 42512 triangles)
+  nsicmmfront.obj (mtr_custom_train_icmm_front_6m_srt)         IDENTICAL (33 groups, 43369 triangles)
+  nsicmmfront_back.obj (mtr_custom_train_icmm_back_srt)        IDENTICAL (32 groups, 38154 triangles)
+  eurostar_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_1) IDENTICAL (2 groups, 33670 triangles)
+  eurostar_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer) IDENTICAL (7 groups, 46658 triangles)
+  eurostar_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer) IDENTICAL (6 groups, 49053 triangles)
+  eurostar_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer) IDENTICAL (6 groups, 19908 triangles)
+  eurostar_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer) IDENTICAL (9 groups, 59164 triangles)
+  eurostar_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_2) IDENTICAL (2 groups, 33670 triangles)
+  old_eurostar_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_11) IDENTICAL (2 groups, 33670 triangles)
+  old_eurostar_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer1) IDENTICAL (7 groups, 46658 triangles)
+  old_eurostar_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer1) IDENTICAL (6 groups, 49053 triangles)
+  old_eurostar_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer1) IDENTICAL (6 groups, 19908 triangles)
+  old_eurostar_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer1) IDENTICAL (9 groups, 59164 triangles)
+  old_eurostar_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_21) IDENTICAL (2 groups, 33670 triangles)
+  gner_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_12) IDENTICAL (2 groups, 33670 triangles)
+  gner_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer2) IDENTICAL (7 groups, 46658 triangles)
+  gner_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer2) IDENTICAL (6 groups, 49053 triangles)
+  gner_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer2) IDENTICAL (6 groups, 19908 triangles)
+  gner_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer2) IDENTICAL (9 groups, 59164 triangles)
+  gner_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_22) IDENTICAL (2 groups, 33670 triangles)
+  tgv_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_13)  IDENTICAL (2 groups, 33670 triangles)
+  tgv_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer3) IDENTICAL (7 groups, 46658 triangles)
+  tgv_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer3) IDENTICAL (6 groups, 49053 triangles)
+  tgv_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer3) IDENTICAL (6 groups, 19908 triangles)
+  tgv_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer3) IDENTICAL (9 groups, 59164 triangles)
+  tgv_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_23) IDENTICAL (2 groups, 33670 triangles)
+
+== Timing, median of 3 runs after 2 warm-ups (single thread)
+  model                                                         parse ms  place ms  build ms  MTR total  alloc MB |   Fast ms   alloc MB  speedup
+  septa_m4.obj (septa_m4_cab_1)                                     18.4       2.2      27.9       52.4        94 |       6.4         12     8.2x
+  septa_m4_bogie.obj (septa_m4_cab_1)                                0.9       0.1       1.4        2.3         4 |       0.4          1     6.1x
+  septa_m4.obj (septa_m4_cab_2)                                     17.4       4.0      30.8       53.6        94 |      10.5         12     5.1x
+  septa_xcelsior_xde40.obj (septa_xcelsior_xde40_pack)              19.3       2.1      37.5       59.0        96 |       6.8         12     8.7x
+  carriage1.obj (metrolink_m5000_cab_1)                             36.3       2.5      54.5       93.2       153 |      10.4         19     8.9x
+  coupler.obj (metrolink_m5000_cab_1_open_coupler)                  41.6       3.3      64.2      108.0       173 |      12.7         21     8.5x
+  middle_sections.obj (metrolink_m5001_trailer)                      3.0       0.3       3.8        7.1        14 |       1.1          2     6.2x
+  carriage2.obj (metrolink_m5002_cab_2)                             36.0       2.6      56.5       95.7       161 |      11.2         20     8.6x
+  coupler1.obj (metrolink_m5002_cab_2_open_coupler)                 43.2       3.0      64.7      109.9       181 |      12.7         22     8.7x
+  carriage2_lower_panto.obj (metrolink_m5002_cab_3)                 35.1       3.1      57.3       94.9       161 |      10.9         20     8.7x
+  coupler3.obj (metrolink_m5002_cab_3_open_coupler)                 40.3       3.0      65.9      113.3       181 |      12.5         22     9.0x
+  ns_sng_civity_mc.obj (mtr_custom_train_ns_sng_civity_mc_cab_1)      81.3       6.5     223.1      315.4       449 |      26.7         49    11.8x
+  ns_sng_civity_mc_back.obj (mtr_custom_train_ns_sng_civity_mc_back_cab_2)      79.2       6.0     240.4      324.3       424 |      25.6         46    12.6x
+  ns_sng_civity_mc_y.obj (mtr_custom_train_ns_sng_civity_mc_cab_y_1)      88.9       6.6     248.9      344.8       449 |      25.6         49    13.5x
+  ns_sng_civity_mc_back_y.obj (mtr_custom_train_ns_sng_civity_mc_back_cab_y_2)      75.3       6.0     229.4      323.9       424 |      24.6         46    13.2x
+  ns_sng_civity_p.obj (mtr_custom_train_ns_sng_civity_p_6m_trailer)      54.9       4.1     126.3      182.2       305 |      17.9         38    10.2x
+  ns_sng_civity_p.obj (mtr_custom_train_ns_sng_civity_p_5m_trailer)      53.6       4.0     121.4      183.4       299 |      17.8         37    10.3x
+  ns_sng_civity_m.obj (mtr_custom_train_ns_sng_civity_m_trailer)      68.9       5.6     203.0      277.3       363 |      52.3         44     5.3x
+  ns_1700.obj (mtr_custom_train_ns_1700_cab_6m)                     43.0       3.3     107.0      153.3       247 |      15.1         28    10.2x
+  ns_1700.obj (mtr_custom_train_ns_1700_cab_5m)                     42.0       3.3      88.3      135.7       247 |      20.3         28     6.7x
+  nsicmcarriage.obj (mtr_custom_train_icm_carriage_srt)             49.1      15.9     124.9      189.8       308 |      17.6         34    10.8x
+  nsicmcarriage_first.obj (mtr_custom_train_icm_carriage_first_srt)      78.9       5.6     186.9      271.4       384 |      22.2         48    12.2x
+  nsicmcarriage_second.obj (mtr_custom_train_icm_carriage_second_srt)      45.9       5.6     132.4      190.8       265 |      15.9         29    12.0x
+  nsicmfront_gangway.obj (mtr_custom_train_icm_front_5m_gangway_srt)      50.4       4.8     113.4      168.3       287 |      16.7         31    10.0x
+  nsicmfront_gangway.obj (mtr_custom_train_icm_front_6m_gangway_srt)      55.9       5.9     124.1      188.7       291 |      23.7         31     8.0x
+  nsicmfront_gangway_back.obj (mtr_custom_train_icm_back_gangway_srt)      38.9       5.1      93.8      139.0       251 |      18.7         28     7.4x
+  nsicmfront.obj (mtr_custom_train_icm_front_5m_srt)                53.4       4.6     108.9      172.2       285 |      15.4         30    11.2x
+  nsicmfront.obj (mtr_custom_train_icm_front_6m_srt)                50.3       5.0     124.9      181.4       289 |      22.7         31     8.0x
+  nsicmfront_back.obj (mtr_custom_train_icm_back_srt)               59.4       6.3     174.6      256.5       249 |      29.7         27     8.6x
+  nsicmmfront.obj (mtr_custom_train_icmm_front_5m_srt)              94.8      10.6     221.4      326.8       285 |      34.9         30     9.4x
+  nsicmmfront.obj (mtr_custom_train_icmm_front_6m_srt)              85.8       7.3     209.3      303.0       289 |      48.8         31     6.2x
+  nsicmmfront_back.obj (mtr_custom_train_icmm_back_srt)             65.0       8.6     197.8      272.8       249 |      23.5         27    11.6x
+  eurostar_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_1)      81.4       5.3     178.2      264.9       233 |      26.2         31    10.1x
+  eurostar_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer)     101.9      35.8     219.7      357.1       305 |      26.7         42    13.4x
+  eurostar_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer)     115.2       8.8     307.4      416.8       318 |      30.6         43    13.6x
+  eurostar_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer)      47.4       3.1      80.9      131.3       130 |      12.6         17    10.4x
+  eurostar_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer)     189.5      55.8     352.3      614.4       390 |      38.9         50    15.8x
+  eurostar_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_2)      60.2       4.4     134.7      199.2       233 |      22.1         31     9.0x
+  old_eurostar_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_11)      67.5      13.4     138.7      225.4       233 |      24.3         31     9.3x
+  old_eurostar_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer1)     100.6       7.9     233.8      342.2       305 |      56.8         42     6.0x
+  old_eurostar_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer1)     115.8       9.6     414.1      550.2       318 |      34.9         43    15.8x
+  old_eurostar_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer1)      49.0       3.8      74.8      136.3       130 |      13.7         17     9.9x
+  old_eurostar_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer1)     148.0      30.3     357.8      591.3       390 |      57.3         50    10.3x
+  old_eurostar_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_21)      89.4       6.1     249.0      336.9       233 |      35.1         31     9.6x
+  gner_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_12)      75.1      11.7     253.1      337.6       233 |      37.2         31     9.1x
+  gner_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer2)     118.4      24.9     315.1      465.7       305 |      34.3         42    13.6x
+  gner_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer2)     146.8      39.4     320.8      520.6       318 |      33.5         43    15.6x
+  gner_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer2)      76.3       4.4     131.5      196.8       130 |      23.2         17     8.5x
+  gner_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer2)     170.3      15.7     401.3      589.0       390 |      42.9         50    13.7x
+  gner_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_22)     129.8       7.4     347.6      462.4       233 |      44.6         31    10.4x
+  tgv_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_13)      172.3       8.9     310.7      558.1       233 |      40.0         31    13.9x
+  tgv_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer3)     127.6      45.1     331.7      503.7       305 |      51.0         42     9.9x
+  tgv_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer3)     197.2      10.3     343.1      569.9       318 |      35.2         43    16.2x
+  tgv_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer3)      60.6       3.5      90.4      154.8       130 |      20.3         17     7.6x
+  tgv_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer3)     146.4      15.3     384.8      546.4       390 |      41.8         50    13.1x
+  tgv_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_23)     105.3       7.4     237.4      378.1       233 |      29.3         31    12.9x
+  SUM                                                                                            15139.6 |    1423.9               10.6x
+
+== Geometry MTR uploads vs unique geometry (per vehicle model)
+  model                                                         uploads     MTR tris  unique tris     factor   MTR VBO MB
+  septa_m4.obj (septa_m4_cab_1)                                     100        27422        14767       1.9x          1.5
+  septa_m4_bogie.obj (septa_m4_cab_1)                                 8         1392          696       2.0x          0.1
+  septa_m4.obj (septa_m4_cab_2)                                     100        27422        14767       1.9x          1.5
+  septa_xcelsior_xde40.obj (septa_xcelsior_xde40_pack)              172        28458        14901       1.9x          1.4
+  carriage1.obj (metrolink_m5000_cab_1)                              20        44492        22398       2.0x          1.8
+  coupler.obj (metrolink_m5000_cab_1_open_coupler)                   16        47280        23792       2.0x          1.9
+  middle_sections.obj (metrolink_m5001_trailer)                       2         3928         1964       2.0x          0.2
+  carriage2.obj (metrolink_m5002_cab_2)                              20        46356        23330       2.0x          1.9
+  coupler1.obj (metrolink_m5002_cab_2_open_coupler)                  16        49144        24724       2.0x          2.0
+  carriage2_lower_panto.obj (metrolink_m5002_cab_3)                  20        46356        23330       2.0x          1.9
+  coupler3.obj (metrolink_m5002_cab_3_open_coupler)                  16        49144        24724       2.0x          2.0
+  ns_sng_civity_mc.obj (mtr_custom_train_ns_sng_civity_mc_cab_1)      174       139996        70666       2.0x          9.0
+  ns_sng_civity_mc_back.obj (mtr_custom_train_ns_sng_civity_mc_back_cab_2)      174       131796        66566       2.0x          8.6
+  ns_sng_civity_mc_y.obj (mtr_custom_train_ns_sng_civity_mc_cab_y_1)      174       139996        70666       2.0x          9.0
+  ns_sng_civity_mc_back_y.obj (mtr_custom_train_ns_sng_civity_mc_back_cab_y_2)      174       131796        66566       2.0x          8.6
+  ns_sng_civity_p.obj (mtr_custom_train_ns_sng_civity_p_6m_trailer)      128        93734        47535       2.0x          6.0
+  ns_sng_civity_p.obj (mtr_custom_train_ns_sng_civity_p_5m_trailer)      128        91100        46218       2.0x          5.9
+  ns_sng_civity_m.obj (mtr_custom_train_ns_sng_civity_m_trailer)      112       113264        57300       2.0x          7.3
+  ns_1700.obj (mtr_custom_train_ns_1700_cab_6m)                     104        75340        37670       2.0x          5.0
+  ns_1700.obj (mtr_custom_train_ns_1700_cab_5m)                     102        75282        37641       2.0x          5.0
+  nsicmcarriage.obj (mtr_custom_train_icm_carriage_srt)             114        96078        48535       2.0x          6.4
+  nsicmcarriage_first.obj (mtr_custom_train_icm_carriage_first_srt)      110       120352        60672       2.0x          7.8
+  nsicmcarriage_second.obj (mtr_custom_train_icm_carriage_second_srt)      102        81592        41292       2.0x          5.5
+  nsicmfront_gangway.obj (mtr_custom_train_icm_front_5m_gangway_srt)      182        84688        42840       2.0x          5.6
+  nsicmfront_gangway.obj (mtr_custom_train_icm_front_6m_gangway_srt)      182        86402        43697       2.0x          5.8
+  nsicmfront_gangway_back.obj (mtr_custom_train_icm_back_gangway_srt)      178        75972        38482       2.0x          5.1
+  nsicmfront.obj (mtr_custom_train_icm_front_5m_srt)                176        84032        42512       2.0x          5.6
+  nsicmfront.obj (mtr_custom_train_icm_front_6m_srt)                176        85746        43369       2.0x          5.7
+  nsicmfront_back.obj (mtr_custom_train_icm_back_srt)               172        75316        38154       2.0x          5.1
+  nsicmmfront.obj (mtr_custom_train_icmm_front_5m_srt)              176        84032        42512       2.0x          5.6
+  nsicmmfront.obj (mtr_custom_train_icmm_front_6m_srt)              176        85746        43369       2.0x          5.7
+  nsicmmfront_back.obj (mtr_custom_train_icmm_back_srt)             172        75316        38154       2.0x          5.1
+  eurostar_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_1)        6        67340        33670       2.0x          2.6
+  eurostar_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer)       16        92138        46658       2.0x          3.4
+  eurostar_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer)       14        96928        49053       2.0x          3.5
+  eurostar_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer)       14        38638        19908       1.9x          1.4
+  eurostar_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer)       20       117150        59164       2.0x          4.3
+  eurostar_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_2)        6        67340        33670       2.0x          2.6
+  old_eurostar_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_11)        6        67340        33670       2.0x          2.6
+  old_eurostar_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer1)       16        92138        46658       2.0x          3.4
+  old_eurostar_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer1)       14        96928        49053       2.0x          3.5
+  old_eurostar_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer1)       14        38638        19908       1.9x          1.4
+  old_eurostar_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer1)       20       117150        59164       2.0x          4.3
+  old_eurostar_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_21)        6        67340        33670       2.0x          2.6
+  gner_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_12)        6        67340        33670       2.0x          2.6
+  gner_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer2)       16        92138        46658       2.0x          3.4
+  gner_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer2)       14        96928        49053       2.0x          3.5
+  gner_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer2)       14        38638        19908       1.9x          1.4
+  gner_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer2)       20       117150        59164       2.0x          4.3
+  gner_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_22)        6        67340        33670       2.0x          2.6
+  tgv_cab.obj (mtr_custom_train_eurostar_class374_cab_cab_13)         6        67340        33670       2.0x          2.6
+  tgv_first_carriage.obj (mtr_custom_train_eurostar_class374_1stcar_trailer3)       16        92138        46658       2.0x          3.4
+  tgv_middle.obj (mtr_custom_train_eurostar_class374_middlecar_trailer3)       14        96928        49053       2.0x          3.5
+  tgv_buffet.obj (mtr_custom_train_eurostar_class374_buffet_trailer3)       14        38638        19908       1.9x          1.4
+  tgv_last_carriage.obj (mtr_custom_train_eurostar_class374_rearcar_trailer3)       20       117150        59164       2.0x          4.3
+  tgv_cab_reversed.obj (mtr_custom_train_eurostar_class374_cabrever_cab_23)        6        67340        33670       2.0x          2.6
+
+== Heap kept alive after loading all models (MTR keeps the ObjModels referenced from its caches)
+  MTR objects: 1147 MB, FastObj packed buffers: 192 MB (and FastObj can drop them once uploaded)
+
+== All models, wall clock: MTR path (serial, render thread) vs FastObj on 4 worker threads
+  MTR serial: 15049 ms, FastObj parallel: 725 ms (20.8x)

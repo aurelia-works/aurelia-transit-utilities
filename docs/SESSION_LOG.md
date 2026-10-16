@@ -113,3 +113,19 @@
 - Self-tests added: ReturnRouteSelfTest, SpeedAuditSelfTest, PlatformCallsSelfTest (also in the announcer-only run), settings in PresetSelfTest, siding-linked and no_departures in DepotHealthSelfTest, train inspector check while riding.
 - `./gradlew build` OK, unit tests pass. **The in-game self-test was not run**: the run was stopped at world load because the owner was using the machine. Next: `./gradlew runSelftest` (full) and the announcer-only run, then check screenshots 02_tools, 80_tools_all, 95/96 platform calls.
 - `mod_version` 1.3.0.
+
+## 2026-10-16 — MTR OBJ loading: research, benchmark, plan (no mod code changed)
+
+- Owner request: find why OBJ trains load slowly in MTR and what ATU can do; benchmark on the M1 without starting Minecraft.
+- MTR 4.0.5 decompiled (jadx): one `CachedResource` build per client tick, render-thread OBJ parse, every non-door part uploaded twice (doors open / closed maps), shader recompile per model load, 60 s expiry with re-parse (preload does not stick for `VehicleModel`), static `CachedResource` registry never pruned, GPU buffers never freed. JCM 2.2.5 already patches `RawMesh.distinct` and `OptimizedRenderer.beginReload`.
+- `tools/objbench/`: headless benchmark calling MTR's real classes (and a headless CGL context for the GL upload) against a FastObj prototype. 56 OBJ models from 5 packs: byte-identical GPU data; real-GL path 9.7 s → 1.6 s (6.1x); 2.0x duplicate GPU geometry; 1147 MB vs 192 MB heap; one shader reload 9–17 ms.
+- Plan and decisions in `docs/MTR_OBJ_PERFORMANCE.md`. Fixes need client mixins into MTR (owner decision). Nothing committed; not tested in game.
+
+## 2026-10-16 (later) — MTR performance fixes in ATU, version 1.4.0 (not run in game)
+
+- Owner decisions: keep it in ATU (KICKOFF exception for client-only rendering/loading mixins into MTR), never post anything to MTR, release on Modrinth as an MTR add-on. First agent hour without Minecraft (owner busy with another agent in Minecraft).
+- Per-frame cost found in MTR 4.0.5 / Iris 1.7.6 bytecode: one `glDrawElements` per OBJ group × material per car, and with a shader pack `VertexAttributeState.apply` calls `ShaderProgram.bind()` per draw, which under Iris is a full `ExtendedShader.bind()` (texture, sampler, uniform, image updates, framebuffer bind).
+- Built: `perf/MergedObjUpload` (+ `OptimizedModelMixin`, `ObjModelAccess`), `client/perf/ShaderBatchFastPath` (+ `VertexAttributeStateMixin` with MixinExtras `@WrapOperation`, `ShaderManagerMixin`), train LOD (`perf/TrainLod`, `client/perf/TrainLodClient`, `TrainProxy`, `RenderVehiclesMixin` on `lambda$render$15`, `VehicleResourceQueueMixin` on `lambda$queue$22`, filter in `OptimizedRendererMixin`), F3 counters (`PerfStats`, `PerfOverlay`, `VertexArrayMixin`, `DebugHudMixin`), `PerformanceScreen` in the hub, `PerfSettings` file, `AtuMixinPlugin` gating every MTR mixin on MTR 4.0.5 (`PerfCompat`), `defaultRequire` 0.
+- Checks: `./gradlew build` OK, 113 unit tests pass (new: PerfSettings, PerfCompat, PerfStats, TrainLod). Refmap maps the `bind()` target to `class_5944.method_34586`, the name MTR's bytecode calls. Every MTR mixin target (methods, call sites, lambda names, argument types) confirmed in the 4.0.5 jar with javap.
+- Headless (`BENCH_ARGS=--draws tools/objbench/run.sh cpu <packs>`): MergedObjUpload vs MTR's per-group uploads on 56 models, bitwise identical triangles per material; buffers/draws 2,280 → 1,099. Results in `tools/objbench/results-draws-2026-10-16.txt`.
+- Not done: nothing has run in Minecraft (mixins applying, box placement and height, Iris output, FPS). Rail LOD, D3 (shadow tier), loading fixes M1–M6 not started. `~/.gradle/caches` was found deleted at 09:40 by something outside this session; the build re-downloaded it.

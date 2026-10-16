@@ -19,3 +19,4 @@ tools/__pycache__/
 .settings/
 *.ipr
 *.iws
+tools/objbench/out/

@@ -21,7 +21,7 @@ Target: Minecraft 1.20.1, Fabric, MTR 4.0.5 (same toolchain as ATA: copy its `bu
 
 ## Rules carried over from ATA
 
-- MTR addon only. **No mixins into MTR and no MTR core changes** unless the owner decides so explicitly for a specific item. Public MTR classes and data only (ATA calls `TicketSystem` and implements `PlatformHelper` this way).
+- MTR addon only. **No mixins into MTR and no MTR core changes** unless the owner decides so explicitly for a specific item. Owner exception (2026-10-16): client-only rendering/loading performance mixins into MTR are allowed in ATU (LOD, model loading, draw calls), each behind a setting and failing soft; see `docs/MTR_PERFORMANCE_ADDON_PLAN.md`. Gameplay, data and server behaviour stay mixin-free. Public MTR classes and data only (ATA calls `TicketSystem` and implements `PlatformHelper` this way).
 - Potato-PC contract (triage section 11): no per-tick work, bounded caches, no new server polling, fail visibly.
 - Never fake MTR data. Where MTR lacks an API, build the honest subset and document the gap.
 - Unit-test every pure-logic class. Do not claim something works until it ran (dev client or the Noriega Prism instance).
