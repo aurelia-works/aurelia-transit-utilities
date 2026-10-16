@@ -129,3 +129,14 @@
 - Checks: `./gradlew build` OK, 113 unit tests pass (new: PerfSettings, PerfCompat, PerfStats, TrainLod). Refmap maps the `bind()` target to `class_5944.method_34586`, the name MTR's bytecode calls. Every MTR mixin target (methods, call sites, lambda names, argument types) confirmed in the 4.0.5 jar with javap.
 - Headless (`BENCH_ARGS=--draws tools/objbench/run.sh cpu <packs>`): MergedObjUpload vs MTR's per-group uploads on 56 models, bitwise identical triangles per material; buffers/draws 2,280 → 1,099. Results in `tools/objbench/results-draws-2026-10-16.txt`.
 - Not done: nothing has run in Minecraft (mixins applying, box placement and height, Iris output, FPS). Rail LOD, D3 (shadow tier), loading fixes M1–M6 not started. `~/.gradle/caches` was found deleted at 09:40 by something outside this session; the build re-downloaded it.
+
+## 2026-10-16 (afternoon) — 1.4.0 measured in game: draw calls, shadows, rail LOD, loading
+
+- Dev client with Iris 1.7.6, Sodium 0.5.13, Complementary Reimagined and the NS pack (`./gradlew -PatuLwjgl331 runPerfbench`, world copy in `run/perf`; `-PatuLwjgl331` pins LWJGL 3.3.1 because Loom's Apple Silicon upgrade to 3.3.2 trips Sodium's check). `PerfBench` parks a 2-car NS Civity and measures fixed views with each fix set; results in `tools/perfbench/`.
+- Built this session: rail LOD (`RailLod`, `RailLodClient`, `RenderRailsMixin`), cheap shadows (D3, `ShadowPass`, `MainRendererMixin`), D4, M2 (`beginReload` skip, not with JCM), M5 (`CachedResourceMixin` weak registry, `GlGarbage` frees VAO/VBO/IBO), build timing on F3, `FastMeshBuild` + `MergedObjUpload.uploadFast`.
+- Shaders on, 40 m: MTR only 63 fps / 9.6 ms in MTR / 1,258 draws → all fixes 78 fps / 3.1 ms / 300 draws. At 170 m: 66 → 102 fps. Shaders off, 40 m: 629 → 216 draws.
+- Bug found and fixed between runs 2 and 3: per-piece calls to MTR's `renderingShadows()` (full stack walk) made "all fixes" slower than MTR (53 fps); `ShadowPass` checks once per MTR pass.
+- `FastMeshBuild`: byte-identical to MTR's mesh code on all 56 models (headless `--fastbuild`, with an MTR-vs-MTR control). Two causes of early mismatches: `HashMap.computeIfAbsent` links new keys at the head of a bin (MTR fills with `put`), and MTR edits shared source models in place, so a car's second list starts from processed data (same triangles, other order). In game: merge+upload 0.99–1.18 s → 0.45 s; all builds 1.93–1.97 s → 1.10–1.35 s.
+- M5 in game: 226–678 vertex arrays freed after 80 s away; train rebuilds and looks the same.
+- Full self-test: RESULT PASS (118 checks). The depot test had failed once because the 10-14 run was killed after clearing the test depot's departures; it now seeds a timetable when it finds none.
+- Commit 5c08a8c. Not built: M1, FastObj parse (rest of M3), M4, M6.
