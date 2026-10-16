@@ -43,6 +43,26 @@ loom {
 			runDir = "run/selftest"
 			programArgs "--quickPlaySingleplayer", "ATU Test"
 		}
+		// MTR performance benchmark (PerfBench): run/perf has its own world copy, the NS pack, Iris and Sodium.
+		perfbench {
+			client()
+			name = "ATU perf bench"
+			source sourceSets.selftest
+			runDir = "run/perf"
+			programArgs "--quickPlaySingleplayer", "ATU Test"
+		}
+	}
+}
+
+// Opt-in (-PatuLwjgl331, for runPerfbench): Loom swaps 1.20.1's LWJGL 3.3.1 for 3.3.2 on Apple Silicon, and Sodium
+// 0.5.x (needed for Iris in the perf bench) refuses to start on anything but 3.3.1. Prism uses 3.3.1 there too.
+if (project.hasProperty("atuLwjgl331")) {
+	configurations.configureEach {
+		resolutionStrategy.eachDependency { details ->
+			if (details.requested.group == "org.lwjgl") {
+				details.useVersion "3.3.1"
+			}
+		}
 	}
 }
 

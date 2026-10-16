@@ -1,0 +1,24 @@
+== ATU perf bench, 2026-10-16, M-series Mac, dev client (LWJGL 3.3.1), MTR 4.0.5, Sodium 0.5.13, Iris 1.7.6, Complementary Reimagined r5.9.3
+== World: run/perf copy of ATU Test, render distance 12, one NS SNG Civity train parked in a manual siding (2 cars: MTR dropped the 3rd, see note). Window on second monitor.
+== fps is noisy run to run (+-20% seen at identical settings); draws/frame and MTR renderer ms are the reliable columns.
+INFO 1 train siding(s), lengths [60]
+INFO siding 1 (60 m): NS Civity, 3 cars
+PASS NS trains placed - 1 siding(s)
+INFO 1 train(s), 2 cars, centre 352 -58 1
+INFO shaders off, MTR only                           40 m:  201.5 fps,   4.96 ms/frame,    595 MTR draws/frame,  1.06 ms in MTR renderer, 1 vehicles
+INFO shaders off, MTR only                          100 m:  204.6 fps,   4.89 ms/frame,    547 MTR draws/frame,  1.04 ms in MTR renderer, 1 vehicles
+INFO shaders off, MTR only                          170 m:  369.6 fps,   2.71 ms/frame,    398 MTR draws/frame,  0.67 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge                              40 m:  337.1 fps,   2.97 ms/frame,    514 MTR draws/frame,  0.66 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge                             100 m:  307.0 fps,   3.26 ms/frame,    466 MTR draws/frame,  0.70 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge                             170 m:  368.6 fps,   2.71 ms/frame,    317 MTR draws/frame,  0.54 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge + LOD 5/10                   40 m:  404.0 fps,   2.48 ms/frame,    514 MTR draws/frame,  0.60 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge + LOD 5/10                  100 m:  457.8 fps,   2.18 ms/frame,    427 MTR draws/frame,  0.46 ms in MTR renderer, 1 vehicles
+INFO shaders off, merge + LOD 5/10                  170 m:  627.5 fps,   1.59 ms/frame,    235 MTR draws/frame,  0.24 ms in MTR renderer, 1 vehicles
+INFO shaders on, merge                               40 m:   58.8 fps,  17.02 ms/frame,   1028 MTR draws/frame,  9.14 ms in MTR renderer, 1 vehicles
+INFO shaders on, merge + fast path                   40 m:   69.9 fps,  14.30 ms/frame,   1028 MTR draws/frame,  5.23 ms in MTR renderer, 1 vehicles
+INFO shaders on, fast path                           40 m:   65.4 fps,  15.30 ms/frame,   1190 MTR draws/frame,  6.33 ms in MTR renderer, 1 vehicles
+INFO shaders on, MTR only                            40 m:   43.0 fps,  23.24 ms/frame,   1190 MTR draws/frame, 13.05 ms in MTR renderer, 1 vehicles
+INFO shaders on, merge + fast path + LOD 5/10        40 m:   59.2 fps,  16.88 ms/frame,   1028 MTR draws/frame,  6.49 ms in MTR renderer, 1 vehicles
+INFO shaders on, merge + fast path + LOD 5/10       100 m:   58.8 fps,  17.01 ms/frame,    854 MTR draws/frame,  5.59 ms in MTR renderer, 1 vehicles
+INFO shaders on, merge + fast path + LOD 5/10       170 m:   84.6 fps,  11.81 ms/frame,    470 MTR draws/frame,  2.80 ms in MTR renderer, 1 vehicles
+RESULT PASS

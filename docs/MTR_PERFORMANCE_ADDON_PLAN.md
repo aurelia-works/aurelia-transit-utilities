@@ -26,6 +26,20 @@ Fixes, best first:
 | D3 | Shadow pass draws the cheapest LOD tier, no interiors, no translucent parts | roughly halves the shader-pack cost | Low |
 | D4 | No per-draw `ByteBuffer` allocation; reuse one buffer | GC pressure | Low |
 
+Measured 2026-10-16 in a dev client (`./gradlew -PatuLwjgl331 runPerfbench`, results in `tools/perfbench/results-2026-10-16-run1.txt`): one 2-car NS Civity, camera 40 m away, Complementary Reimagined on Iris 1.7.6. All mixins applied, no errors; train looks the same with every fix on, with and without shaders.
+
+| Shaders on, 40 m | fps | ms in MTR renderer | MTR draws/frame |
+|---|---|---|---|
+| MTR only | 43 | 13.1 | 1,190 |
+| D1 merge | 59 | 9.1 | 1,028 |
+| D2 fast path | 65 | 6.3 | 1,190 |
+| D1 + D2 | 70 | 5.2 | 1,028 |
+
+- Hypothesis 2 confirmed: with shaders, time per MTR draw is ~11 µs against ~1.8 µs without; the fast path removes ~half of it. Shaders also double the draws (shadow pass), so D3 is worth doing.
+- Without shaders: MTR renderer 1.06 → 0.66 ms with merge; fps is too noisy (±20 %) to read single runs.
+- About 235 draws a frame are not the train at all (rails and other MTR models): at 170 m with the train as a box, 235 remain. Rail LOD is the next biggest lever.
+- Train box tier (T2) shows correct size, position and colour at 170 m, shaders on and off.
+
 Status 2026-10-16 (first agent hour, no Minecraft): D1, D2, the F3 counters, the settings page and train LOD tiers T1 (no interior) and T2 (box, no load) are built and pass the build and unit tests; D1 is verified bitwise on 56 models headless. Nothing has run in game yet. D3/D4 and rail LOD are not built.
 
 ## 2. What MTR 4.0.5 does today (from the jar)

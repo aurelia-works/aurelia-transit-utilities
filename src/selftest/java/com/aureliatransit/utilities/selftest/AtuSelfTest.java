@@ -43,7 +43,14 @@ public final class AtuSelfTest implements ClientModInitializer {
 	public void onInitializeClient() {
 		// run/selftest/atu_selftest_only.txt containing "announcer" runs only the platform calls and the announcer ride
 		// (they take minutes).
-		if (onlyAnnouncer()) {
+		// "perf" runs only the MTR performance benchmark (run/perf, see PerfBench).
+		if (onlyMode().equals("perf")) {
+			PerfBench.addSteps(this);
+			ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
+			ClientTickEvents.END_CLIENT_TICK.register(this::tick);
+			return;
+		}
+		if (onlyMode().equals("announcer")) {
 			PlatformCallsSelfTest.addSteps(this);
 			AnnouncerSelfTest.addSteps(this);
 			ClientLifecycleEvents.CLIENT_STARTED.register(SecondMonitor::move);
@@ -68,12 +75,12 @@ public final class AtuSelfTest implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 	}
 
-	private static boolean onlyAnnouncer() {
+	private static String onlyMode() {
 		try {
 			final Path file = net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().resolve("atu_selftest_only.txt");
-			return Files.exists(file) && Files.readString(file).trim().equals("announcer");
+			return Files.exists(file) ? Files.readString(file).trim() : "";
 		} catch (IOException e) {
-			return false;
+			return "";
 		}
 	}
 
@@ -108,6 +115,12 @@ public final class AtuSelfTest implements ClientModInitializer {
 		final String line = "SKIP " + name + " - " + reason;
 		report.add(line);
 		LOGGER.info("[ATU-SELFTEST] {}", line);
+	}
+
+	/** A measurement or other information line; never fails the run. */
+	void note(String line) {
+		report.add("INFO " + line);
+		LOGGER.info("[ATU-SELFTEST] INFO {}", line);
 	}
 
 	void check(String name, boolean ok, String detail) {
