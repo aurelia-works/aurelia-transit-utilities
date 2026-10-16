@@ -45,6 +45,8 @@ public final class PerformanceScreen extends Screen {
 		y += ROW;
 		toggle("background", settings -> settings.backgroundModelLoading, (settings) -> settings.backgroundModelLoading = !settings.backgroundModelLoading, left, y);
 		y += ROW;
+		toggle("doors", settings -> settings.fasterDoorChecks, (settings) -> settings.fasterDoorChecks = !settings.fasterDoorChecks, left, y);
+		y += ROW;
 		toggle("free", settings -> settings.freeUnusedModels, (settings) -> settings.freeUnusedModels = !settings.freeUnusedModels, left, y);
 		y += ROW;
 		toggle("overlay", settings -> settings.debugOverlay, (settings) -> settings.debugOverlay = !settings.debugOverlay, left, y);

@@ -160,10 +160,11 @@ public final class AsyncModels {
 
 	/** Once per client tick: drop results whose train left view before they were used. */
 	public static void tick() {
+		final long now = System.currentTimeMillis();
+		AsyncPacks.tick(now);
 		if (JOBS.isEmpty()) {
 			return;
 		}
-		final long now = System.currentTimeMillis();
 		JOBS.removeIf(job -> {
 			if (!job.done) {
 				return false;
@@ -192,6 +193,11 @@ public final class AsyncModels {
 	/** Average time from the first request to the parsed result being used, in ms. */
 	public static double averageWaitMillis() {
 		return built == 0 ? 0 : waitNanos / 1e6 / built;
+	}
+
+	/** Runs background work for {@link AsyncPacks} on the same worker threads. */
+	static void execute(Runnable runnable) {
+		executor().execute(runnable);
 	}
 
 	private static int outstanding() {

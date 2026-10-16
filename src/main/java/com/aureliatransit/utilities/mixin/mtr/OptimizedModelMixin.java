@@ -1,7 +1,9 @@
 package com.aureliatransit.utilities.mixin.mtr;
 
 import com.aureliatransit.utilities.client.perf.RailLodClient;
+import com.aureliatransit.utilities.perf.AsyncPacks;
 import com.aureliatransit.utilities.perf.DoorShare;
+import com.aureliatransit.utilities.perf.FastMeshBuild;
 import com.aureliatransit.utilities.perf.MergedObjUpload;
 import com.aureliatransit.utilities.perf.Perf;
 import org.mtr.mapping.mapper.OptimizedModel;
@@ -18,10 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -52,6 +51,7 @@ public abstract class OptimizedModelMixin {
 		} catch (RuntimeException e) {
 			// MTR's own path runs for this model and every later one this session.
 			atu$failed = true;
+			AsyncPacks.disable();
 			Perf.LOGGER.error("Merging train parts failed; using MTR's own model upload for the rest of this session", e);
 		}
 	}
@@ -60,9 +60,11 @@ public abstract class OptimizedModelMixin {
 	@Unique
 	private static List<VertexArray> atu$upload(Collection<OptimizedModel.ObjModel> objModels) {
 		final long start = System.nanoTime();
+		final long packBefore = MergedObjUpload.packNanos;
 		try {
 			return atu$uploadTimed(objModels);
 		} finally {
+			Perf.STATS.buildPack(MergedObjUpload.packNanos - packBefore);
 			Perf.STATS.merge(System.nanoTime() - start);
 		}
 	}
@@ -70,47 +72,40 @@ public abstract class OptimizedModelMixin {
 	/** Parts both door states use are uploaded once ({@link DoorShare}); the rest as one merged upload. */
 	@Unique
 	private static List<VertexArray> atu$uploadTimed(Collection<OptimizedModel.ObjModel> objModels) {
-		final Set<OptimizedModel.ObjModel> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-		final List<OptimizedModel.ObjModel> unique = new ArrayList<>(objModels.size());
-		for (final OptimizedModel.ObjModel objModel : objModels) {
-			if (seen.add(objModel)) {
-				unique.add(objModel);
-			}
+		final DoorShare.Split split = DoorShare.split(objModels);
+		if (split.share == null) {
+			return atu$uploadMerged(split.unique);
 		}
-		final DoorShare share = DoorShare.of(unique);
-		if (share == null) {
-			return atu$uploadMerged(unique);
-		}
-		final List<OptimizedModel.ObjModel> common = new ArrayList<>(unique.size());
-		final List<OptimizedModel.ObjModel> rest = new ArrayList<>();
-		for (final OptimizedModel.ObjModel objModel : unique) {
-			(share.isCommon(objModel) ? common : rest).add(objModel);
-		}
-		List<VertexArray> commonArrays = share.uploaded();
+		List<VertexArray> commonArrays = split.share.uploaded();
 		if (commonArrays == null) {
-			commonArrays = atu$uploadMerged(common);
-			share.store(commonArrays);
+			commonArrays = atu$uploadMerged(split.common);
+			split.share.store(commonArrays);
 		} else {
 			Perf.STATS.shared(commonArrays.size());
 		}
 		final List<VertexArray> vertexArrays = new ArrayList<>(commonArrays);
-		if (!rest.isEmpty()) {
-			vertexArrays.addAll(atu$uploadMerged(rest));
+		if (!split.rest.isEmpty()) {
+			vertexArrays.addAll(atu$uploadMerged(split.rest));
 		}
 		return vertexArrays;
 	}
 
 	@Unique
 	private static List<VertexArray> atu$uploadMerged(List<OptimizedModel.ObjModel> objModels) {
-		final Function<OptimizedModel.ObjModel, RawModel> rawModelOf = objModel -> ((ObjModelAccess) (Object) objModel).atu$rawModel();
+		final Function<OptimizedModel.ObjModel, RawModel> rawModelOf = AsyncPacks.RAW_MODEL_OF;
 		if (Perf.settings().fasterModelLoading && !atu$fastFailed) {
 			try {
+				final List<FastMeshBuild.Packed> packed = AsyncPacks.take(objModels, DEFAULT_MAPPING);
+				if (packed != null) {
+					return MergedObjUpload.uploadPacked(packed, DEFAULT_MAPPING);
+				}
 				final List<VertexArray> vertexArrays = MergedObjUpload.uploadFast(objModels, rawModelOf, DEFAULT_MAPPING);
 				if (vertexArrays != null) {
 					return vertexArrays;
 				}
 			} catch (RuntimeException e) {
 				atu$fastFailed = true;
+				AsyncPacks.disable();
 				Perf.LOGGER.error("Fast model build failed; using MTR's mesh code for the rest of this session", e);
 			}
 		}

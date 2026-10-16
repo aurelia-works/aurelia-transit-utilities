@@ -1,0 +1,42 @@
+== ATU perf bench (perfload), 2026-10-16 late evening: as loading2, plus the slowest build split into parts, background mesh builds, and door checks MTR vs remembered at 40 m. Machine load average 16-23 from other work during this run: absolute fps and ms are noisy; compare within the run.
+INFO 1 train siding(s), lengths [60]
+INFO siding 1 (60 m): NS Civity, 2 cars
+PASS NS trains placed - 1 siding(s)
+INFO 1 train(s), 2 cars, centre 351 -58 1
+INFO shaders off, MTR loading                40 m:   69.5 fps,  14.39 ms/frame,    222 MTR draws/frame,  2.75 ms in MTR renderer, 13.74 ms all of MTR, 1 vehicles
+INFO MTR loading                            model builds: 18, 7558 ms total on the render thread, of which 3064 ms merge and upload; longest 0 ms; last -6.94 s after the reload
+INFO MTR loading                            slowest build none
+INFO MTR loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 0 ms (any thread), 0 background builds, 0 files left to MTR's reader
+INFO shaders off, ATU loading                40 m:  215.9 fps,   4.63 ms/frame,    222 MTR draws/frame,  0.86 ms in MTR renderer,  1.83 ms all of MTR, 1 vehicles
+INFO ATU loading                            model builds: 18, 1072 ms total on the render thread, of which 371 ms merge and upload; longest 0 ms; last -11.12 s after the reload
+INFO ATU loading                            slowest build none
+INFO ATU loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 118 ms (any thread), 0 background builds, 0 files left to MTR's reader
+PASS door states share GPU buffers - 88 vertex arrays reused
+PASS ATU reads every NS train OBJ file - 0 left to MTR
+INFO shaders off, MTR loading                40 m:   63.0 fps,  15.86 ms/frame,    222 MTR draws/frame,  2.16 ms in MTR renderer,  5.55 ms all of MTR, 1 vehicles
+INFO MTR loading                            model builds: 18, 1627 ms total on the render thread, of which 696 ms merge and upload; longest 0 ms; last -10.02 s after the reload
+INFO MTR loading                            slowest build none
+INFO MTR loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 0 ms (any thread), 0 background builds, 0 files left to MTR's reader
+INFO shaders off, ATU loading                40 m:   49.7 fps,  20.10 ms/frame,    222 MTR draws/frame,  3.34 ms in MTR renderer,  9.32 ms all of MTR, 1 vehicles
+INFO ATU loading                            model builds: 19, 1738 ms total on the render thread, of which 653 ms merge and upload; longest 0 ms; last -9.62 s after the reload
+INFO ATU loading                            slowest build none
+INFO ATU loading                            GPU vertex arrays created: 144, shared between door states: 88; OBJ reading 360 ms (any thread), 0 background builds, 0 files left to MTR's reader
+PASS door states share GPU buffers - 88 vertex arrays reused
+PASS ATU reads every NS train OBJ file - 0 left to MTR
+INFO shaders off, door checks MTR            40 m:   52.8 fps,  18.95 ms/frame,    222 MTR draws/frame,  3.24 ms in MTR renderer, 19.80 ms all of MTR, 1 vehicles
+INFO shaders off, door checks remembered     40 m:   51.2 fps,  19.51 ms/frame,    222 MTR draws/frame,  2.18 ms in MTR renderer,  5.52 ms all of MTR, 1 vehicles
+INFO door checks: 63360 remembered, 616 searched, 250 compared with MTR's, 0 different; 4374 shadow checks without a stack walk
+PASS door checks are remembered - 63360 remembered
+PASS remembered door checks match MTR's - 250 compared, 0 different
+PASS shadow checks skip the stack walk - 4374 answered
+PASS unused MTR models free their GPU arrays - 288 vertex arrays freed
+INFO shaders off, return, render-thread loading  40 m:  235.3 fps,   4.25 ms/frame,    222 MTR draws/frame,  0.80 ms in MTR renderer,  1.64 ms all of MTR, 1 vehicles
+INFO return, render-thread loading          model builds: 18, 993 ms total on the render thread, longest 302 ms, last 2.26 s after coming back; 0 from a background parse
+INFO return, render-thread loading          slowest build 302.4 ms: createModel 0.0 (model file 0.0, of which OBJ reading 0.0 and materials 0.0; merge and upload 0.0; rest 0.0), merge and upload outside it 302.3 (mesh build in all 278.8), other 0.1; 0 part lists built in the background
+PASS unused MTR models free their GPU arrays - 144 vertex arrays freed
+INFO shaders off, return, background loading  40 m:  139.1 fps,   7.19 ms/frame,    222 MTR draws/frame,  1.27 ms in MTR renderer,  2.76 ms all of MTR, 1 vehicles
+INFO return, background loading             model builds: 958, 239 ms total on the render thread, longest 58 ms, last 1.80 s after coming back; 2 from a background parse
+INFO return, background loading             slowest build 58.2 ms: createModel 56.2 (model file 12.0, of which OBJ reading 0.0 and materials 3.3; merge and upload 3.6; rest 40.7), merge and upload outside it 0.0 (mesh build in all 2.2), other 2.0; 4 part lists built in the background
+PASS train models load in the background - 2 models built from a background parse
+PASS train meshes build in the background - 4 part lists
+RESULT PASS

@@ -34,6 +34,8 @@ public final class DoorShare {
 	private static final DoorShare CONFLICT = new DoorShare(Collections.emptySet());
 
 	private final Set<OptimizedModel.ObjModel> common;
+	/** The common parts in the order the first upload listed them; both door states use it (one background build). */
+	private List<OptimizedModel.ObjModel> commonOrder;
 	private List<WeakReference<VertexArray>> uploaded;
 
 	private DoorShare(Set<OptimizedModel.ObjModel> common) {
@@ -85,6 +87,65 @@ public final class DoorShare {
 		final Set<OptimizedModel.ObjModel> present = Collections.newSetFromMap(new IdentityHashMap<>());
 		present.addAll(uniqueObjModels);
 		return present.containsAll(found.common) ? found : null;
+	}
+
+	/**
+	 * How one model upload is split: each part once, in order; with a share, the parts both door states use
+	 * ({@code common}, uploaded once for both) and the rest.
+	 */
+	public static final class Split {
+
+		public final List<OptimizedModel.ObjModel> unique;
+		/** Null when the upload is not one of a linked pair. */
+		public final DoorShare share;
+		public final List<OptimizedModel.ObjModel> common;
+		public final List<OptimizedModel.ObjModel> rest;
+
+		private Split(List<OptimizedModel.ObjModel> unique, DoorShare share, List<OptimizedModel.ObjModel> common, List<OptimizedModel.ObjModel> rest) {
+			this.unique = unique;
+			this.share = share;
+			this.common = common;
+			this.rest = rest;
+		}
+
+		/** The part lists this upload would build now: the common parts only if no earlier upload's buffers are alive. */
+		public List<List<OptimizedModel.ObjModel>> toBuild() {
+			if (share == null) {
+				return List.of(unique);
+			}
+			final List<List<OptimizedModel.ObjModel>> lists = new ArrayList<>(2);
+			if (share.uploaded() == null) {
+				lists.add(common);
+			}
+			if (!rest.isEmpty()) {
+				lists.add(rest);
+			}
+			return lists;
+		}
+	}
+
+	public static Split split(Collection<OptimizedModel.ObjModel> objModels) {
+		final Set<OptimizedModel.ObjModel> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+		final List<OptimizedModel.ObjModel> unique = new ArrayList<>(objModels.size());
+		for (final OptimizedModel.ObjModel objModel : objModels) {
+			if (seen.add(objModel)) {
+				unique.add(objModel);
+			}
+		}
+		final DoorShare share = of(unique);
+		if (share == null) {
+			return new Split(unique, null, List.of(), List.of());
+		}
+		final List<OptimizedModel.ObjModel> common = new ArrayList<>(unique.size());
+		final List<OptimizedModel.ObjModel> rest = new ArrayList<>();
+		for (final OptimizedModel.ObjModel objModel : unique) {
+			(share.isCommon(objModel) ? common : rest).add(objModel);
+		}
+		// Exactly the share's parts (of() checked they are all here), so the first order fits every later upload.
+		if (share.commonOrder == null) {
+			share.commonOrder = common;
+		}
+		return new Split(unique, share, share.commonOrder, rest);
 	}
 
 	public boolean isCommon(OptimizedModel.ObjModel objModel) {

@@ -32,6 +32,9 @@ public final class MergedObjUpload {
 	/** {@code GL_UNSIGNED_INT}, MTR's index type. */
 	private static final int GL_UNSIGNED_INT = 5125;
 
+	/** Time spent in {@link FastMeshBuild#pack} so far (render thread; not {@link Perf}, which needs Fabric). */
+	public static long packNanos;
+
 	private MergedObjUpload() {
 	}
 
@@ -44,10 +47,17 @@ public final class MergedObjUpload {
 	 * should then run). Render thread.
 	 */
 	public static List<VertexArray> uploadFast(Collection<OptimizedModel.ObjModel> objModels, Function<OptimizedModel.ObjModel, RawModel> rawModelOf, VertexAttributeMapping mapping) {
+		final long start = System.nanoTime();
 		final List<FastMeshBuild.Packed> packedMeshes = FastMeshBuild.pack(objModels, rawModelOf, mapping);
+		packNanos += System.nanoTime() - start;
 		if (packedMeshes == null) {
 			return null;
 		}
+		return uploadPacked(packedMeshes, mapping);
+	}
+
+	/** Uploads meshes packed by {@link FastMeshBuild#pack} (here or on a worker). Render thread. */
+	public static List<VertexArray> uploadPacked(List<FastMeshBuild.Packed> packedMeshes, VertexAttributeMapping mapping) {
 		final List<VertexArray> vertexArrays = new ArrayList<>(packedMeshes.size());
 		for (final FastMeshBuild.Packed packed : packedMeshes) {
 			final VertexBuffer vertexBuffer = new VertexBuffer();
@@ -57,9 +67,7 @@ public final class MergedObjUpload {
 			vertexBuffer.upload(vertices, VertexBuffer.USAGE_STATIC_DRAW);
 			OffHeapAllocator.free(vertices);
 			final ByteBuffer indices = OffHeapAllocator.allocate(packed.indices.length * 4);
-			for (final int index : packed.indices) {
-				indices.putInt(index);
-			}
+			indices.asIntBuffer().put(packed.indices);
 			indexBuffer.upload(indices, VertexBuffer.USAGE_STATIC_DRAW);
 			indexBuffer.setFaceCount(packed.faceCount);
 			OffHeapAllocator.free(indices);

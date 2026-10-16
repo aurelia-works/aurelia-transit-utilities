@@ -241,6 +241,8 @@
 	"gui.aurelia_transit_utilities.perf.loading.tooltip": "Reads train OBJ files about 4x faster and builds their GPU data about 2x faster, with the same result as MTR. Also stops MTR recompiling its shaders every time a train model loads (Joban Client Mod does that part too; with JCM installed this switch leaves it to JCM).",
 	"gui.aurelia_transit_utilities.perf.background": "Load trains in the background: %s",
 	"gui.aurelia_transit_utilities.perf.background.tooltip": "Reads a train's OBJ files on a worker thread instead of freezing a frame, and all files of a train at once. The train appears a moment later instead of the game stuttering. Needs faster model loading.",
+	"gui.aurelia_transit_utilities.perf.doors": "Faster door checks: %s",
+	"gui.aurelia_transit_utilities.perf.doors.tooltip": "Every frame MTR looks at every block around each doorway of each stopped train to see whether there is a platform. This remembers what it found until a block changes. Same result, much less work per frame.",
 	"gui.aurelia_transit_utilities.perf.free": "Free unused models: %s",
 	"gui.aurelia_transit_utilities.perf.free.tooltip": "MTR drops a train model a minute after it was last drawn, but keeps its memory and GPU buffers for the rest of the session. This gives them back. Applies to models loaded after the change.",
 	"gui.aurelia_transit_utilities.perf.overlay": "F3 counters: %s",

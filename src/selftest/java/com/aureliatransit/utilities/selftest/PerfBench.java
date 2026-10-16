@@ -2,7 +2,10 @@ package com.aureliatransit.utilities.selftest;
 
 import com.aureliatransit.utilities.client.MtrBridge;
 import com.aureliatransit.utilities.client.perf.GlGarbage;
+import com.aureliatransit.utilities.client.perf.DoorChecks;
+import com.aureliatransit.utilities.client.perf.ShadowPass;
 import com.aureliatransit.utilities.perf.AsyncModels;
+import com.aureliatransit.utilities.perf.AsyncPacks;
 import com.aureliatransit.utilities.perf.Perf;
 import com.aureliatransit.utilities.perf.PerfSettings;
 import com.aureliatransit.utilities.preset.PresetCar;
@@ -56,6 +59,7 @@ final class PerfBench {
 	private static int sampleTicks;
 	private static double drawSum;
 	private static double renderSum;
+	private static double mtrSum;
 	private static int statCount;
 	private static CompletableFuture<Void> reload;
 
@@ -153,6 +157,7 @@ final class PerfBench {
 			measure(test, "shaders off, " + label, ALL, 40);
 			test.act("builds " + label, () -> {
 				test.note(String.format(Locale.ROOT, "%-38s model builds: %d, %.0f ms total on the render thread, of which %.0f ms merge and upload; longest %.0f ms; last %.2f s after the reload", label, Perf.STATS.loads() - before[0], Perf.STATS.loadMillis() - beforeMillis[0], Perf.STATS.mergeMillis() - beforeMillis[1], Perf.STATS.phaseMaxLoadMillis(), (Perf.STATS.lastLoadAt() - before[5]) / 1e9));
+				test.note(String.format(Locale.ROOT, "%-38s slowest build %s", label, Perf.STATS.phaseSlowestBuild()));
 				test.note(String.format(Locale.ROOT, "%-38s GPU vertex arrays created: %d, shared between door states: %d; OBJ reading %.0f ms (any thread), %d background builds, %d files left to MTR's reader", label, Perf.STATS.arraysCreated() - before[1], Perf.STATS.sharedArrays() - before[2], Perf.STATS.parseMillis() - beforeMillis[2], AsyncModels.built() - before[3], Perf.STATS.parseFallbacks() - before[4]));
 				if (fast) {
 					test.check("door states share GPU buffers", Perf.STATS.sharedArrays() > before[2], (Perf.STATS.sharedArrays() - before[2]) + " vertex arrays reused");
@@ -160,12 +165,28 @@ final class PerfBench {
 				}
 			});
 		}
+		// MTR's per-frame doorway search: off, then remembered. ATU also checks every 256th call against MTR's own.
+		final long[] doors = new long[4];
+		measure(test, "shaders off, door checks MTR", new Fixes(true, true, true, true, true, false), 40);
+		test.act("door checks on", () -> {
+			doors[0] = DoorChecks.hits();
+			doors[1] = DoorChecks.misses();
+			doors[2] = DoorChecks.compared();
+			doors[3] = ShadowPass.answered();
+		});
+		measure(test, "shaders off, door checks remembered", ALL, 40);
+		test.act("door checks", () -> {
+			test.note(String.format(Locale.ROOT, "door checks: %d remembered, %d searched, %d compared with MTR's, %d different; %d shadow checks without a stack walk", DoorChecks.hits() - doors[0], DoorChecks.misses() - doors[1], DoorChecks.compared() - doors[2], DoorChecks.mismatches(), ShadowPass.answered() - doors[3]));
+			test.check("door checks are remembered", DoorChecks.hits() > doors[0], (DoorChecks.hits() - doors[0]) + " remembered");
+			test.check("remembered door checks match MTR's", DoorChecks.compared() > doors[2] && DoorChecks.mismatches() == 0, (DoorChecks.compared() - doors[2]) + " compared, " + DoorChecks.mismatches() + " different");
+			test.check("shadow checks skip the stack walk", ShadowPass.answered() > doors[3] && !ShadowPass.mismatch(), (ShadowPass.answered() - doors[3]) + " answered");
+		});
 		// Twice: the camera leaves until MTR drops the models, then comes back and MTR rebuilds them without a reload
 		// screen. First with every model built on the render thread, then with background loading.
 		for (final boolean background : new boolean[]{false, true}) {
 			final String label = background ? "return, background loading" : "return, render-thread loading";
 			final long[] freedBefore = new long[1];
-			final long[] before = new long[3];
+			final long[] before = new long[4];
 			final double[] beforeMillis = new double[1];
 			test.act("camera far away", () -> {
 				configure(ALL);
@@ -186,14 +207,17 @@ final class PerfBench {
 				before[0] = Perf.STATS.loads();
 				before[1] = AsyncModels.built();
 				before[2] = System.nanoTime();
+				before[3] = AsyncPacks.built();
 				beforeMillis[0] = Perf.STATS.loadMillis();
 			});
 			// Back again: MTR rebuilds the dropped models and the train must look as before.
 			measure(test, "shaders off, " + label, ALL, 40);
 			test.act("builds " + label, () -> {
 				test.note(String.format(Locale.ROOT, "%-38s model builds: %d, %.0f ms total on the render thread, longest %.0f ms, last %.2f s after coming back; %d from a background parse", label, Perf.STATS.loads() - before[0], Perf.STATS.loadMillis() - beforeMillis[0], Perf.STATS.phaseMaxLoadMillis(), (Perf.STATS.lastLoadAt() - before[2]) / 1e9, AsyncModels.built() - before[1]));
+				test.note(String.format(Locale.ROOT, "%-38s slowest build %s; %d part lists built in the background", label, Perf.STATS.phaseSlowestBuild(), AsyncPacks.built() - before[3]));
 				if (background) {
 					test.check("train models load in the background", AsyncModels.built() > before[1], (AsyncModels.built() - before[1]) + " models built from a background parse");
+					test.check("train meshes build in the background", AsyncPacks.built() > before[3], (AsyncPacks.built() - before[3]) + " part lists");
 				}
 			});
 			test.screenshot("perf_40_" + (background ? "return_background" : "return_render_thread"));
@@ -201,15 +225,15 @@ final class PerfBench {
 	}
 
 	/** Which fixes are on. Train LOD is interiors 5 / boxes 10 chunks, rail LOD flat 3 / far 8 chunks. */
-	private record Fixes(boolean merge, boolean fastPath, boolean cheapShadows, boolean trainLod, boolean railLod) {
+	private record Fixes(boolean merge, boolean fastPath, boolean cheapShadows, boolean trainLod, boolean railLod, boolean doors) {
 	}
 
-	private static final Fixes NONE = new Fixes(false, false, false, false, false);
-	private static final Fixes MERGE = new Fixes(true, false, false, false, false);
-	private static final Fixes MERGE_FAST = new Fixes(true, true, false, false, false);
-	private static final Fixes MERGE_FAST_SHADOWS = new Fixes(true, true, true, false, false);
-	private static final Fixes MERGE_TRAIN_LOD = new Fixes(true, false, false, true, false);
-	private static final Fixes ALL = new Fixes(true, true, true, true, true);
+	private static final Fixes NONE = new Fixes(false, false, false, false, false, false);
+	private static final Fixes MERGE = new Fixes(true, false, false, false, false, false);
+	private static final Fixes MERGE_FAST = new Fixes(true, true, false, false, false, false);
+	private static final Fixes MERGE_FAST_SHADOWS = new Fixes(true, true, true, false, false, false);
+	private static final Fixes MERGE_TRAIN_LOD = new Fixes(true, false, false, true, false, false);
+	private static final Fixes ALL = new Fixes(true, true, true, true, true, true);
 
 	/** Side views at 40, 100 and 170 m, then a view along the track. Merge needs a resource reload to change. */
 	private static void measureViews(AtuSelfTest test, String label, Fixes fixes, boolean screenshots) {
@@ -245,6 +269,7 @@ final class PerfBench {
 			frames = 0;
 			drawSum = 0;
 			renderSum = 0;
+			mtrSum = 0;
 			statCount = 0;
 			sampleTicks = 0;
 			sampleStart = System.nanoTime();
@@ -254,6 +279,7 @@ final class PerfBench {
 			if (sampleTicks % SECONDS == 0 && Perf.STATS.hasResult()) {
 				drawSum += Perf.STATS.drawsPerFrame();
 				renderSum += Perf.STATS.renderMillisPerFrame();
+				mtrSum += Perf.STATS.mtrMillisPerFrame();
 				statCount++;
 			}
 			if (sampleTicks < SAMPLE_TICKS) {
@@ -262,8 +288,8 @@ final class PerfBench {
 			sampling = false;
 			final double seconds = (System.nanoTime() - sampleStart) / 1e9;
 			final double fps = frames / seconds;
-			test.note(String.format(Locale.ROOT, "%-38s %5s: %6.1f fps, %6.2f ms/frame, %6.0f MTR draws/frame, %5.2f ms in MTR renderer, %d vehicles", label, distance < 0 ? "track" : distance + " m", fps, 1000 / fps,
-					statCount == 0 ? 0 : drawSum / statCount, statCount == 0 ? 0 : renderSum / statCount, trains().size()));
+			test.note(String.format(Locale.ROOT, "%-38s %5s: %6.1f fps, %6.2f ms/frame, %6.0f MTR draws/frame, %5.2f ms in MTR renderer, %5.2f ms all of MTR, %d vehicles", label, distance < 0 ? "track" : distance + " m", fps, 1000 / fps,
+					statCount == 0 ? 0 : drawSum / statCount, statCount == 0 ? 0 : renderSum / statCount, statCount == 0 ? 0 : mtrSum / statCount, trains().size()));
 			return true;
 		}, SAMPLE_TICKS + SECONDS);
 	}
@@ -398,6 +424,7 @@ final class PerfBench {
 		settings.trainBoxChunks = fixes.trainLod() ? 10 : 0;
 		settings.railSimpleChunks = fixes.railLod() ? 3 : 0;
 		settings.railFarChunks = fixes.railLod() ? 8 : 0;
+		settings.fasterDoorChecks = fixes.doors();
 	}
 
 	/** Iris API by reflection: the self-test does not compile against Iris. */

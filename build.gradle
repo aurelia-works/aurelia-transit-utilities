@@ -50,6 +50,10 @@ loom {
 			source sourceSets.selftest
 			runDir = "run/perf"
 			programArgs "--quickPlaySingleplayer", "ATU Test"
+			// -PatuJfr: Java Flight Recorder profile of the whole run, 1 ms samples, in run/perf/perfbench.jfr.
+			if (project.hasProperty("atuJfr")) {
+				vmArg "-XX:StartFlightRecording=filename=perfbench.jfr,settings=profile,jdk.ExecutionSample#period=1ms"
+			}
 		}
 	}
 }

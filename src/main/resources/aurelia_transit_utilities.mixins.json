@@ -5,11 +5,14 @@
 	"plugin": "com.aureliatransit.utilities.mixin.AtuMixinPlugin",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
+		"ClientChunkManagerMixin",
 		"DebugHudMixin",
 		"mtr.CachedResourceAccess",
 		"mtr.CachedResourceMixin",
 		"mtr.MainRendererMixin",
+		"mtr.ModShaderHandlerMixin",
 		"mtr.ObjModelAccess",
+		"mtr.OptimizedModelAccess",
 		"mtr.ObjModelLoaderMixin",
 		"mtr.ObjModelShareMixin",
 		"mtr.OptimizedModelMixin",
@@ -17,6 +20,7 @@
 		"mtr.OptimizedRendererMixin",
 		"mtr.RailSchemaAccess",
 		"mtr.RenderRailsMixin",
+		"mtr.RenderVehicleHelperMixin",
 		"mtr.RenderVehiclesMixin",
 		"mtr.ShaderManagerMixin",
 		"mtr.VertexArrayMixin",
@@ -24,7 +28,8 @@
 		"mtr.VehicleResourceQueueMixin",
 		"mtr.VehicleModelMixin",
 		"mtr.VehicleResourceBuildMixin",
-		"mtr.VertexAttributeStateMixin"
+		"mtr.VertexAttributeStateMixin",
+		"WorldChunkMixin"
 	],
 	"injectors": {"defaultRequire": 0}
 }

@@ -40,9 +40,11 @@ A **Performance** page in the ATU hub fixes slow spots in MTR 4.0.5's train and 
 - **Cheaper shadows** (shader packs): no translucent parts and no interiors in the shadow pass; rails use their far tier.
 - **Train and rail LOD**: distant cars lose their interior, then become a box without loading the model; distant 3D rails become MTR's flat strips.
 - **Faster model loading**: ATU's own OBJ reader and mesh builder (same output as MTR's, checked vertex by vertex on 50 OBJ files from 8 packs) and no shader recompile per model.
-- **Load trains in the background**: OBJ files are read on a worker thread, so a train coming into view no longer freezes a frame.
+- **Load trains in the background**: OBJ files are read and the car's meshes are built on worker threads, so a train coming into view no longer freezes a frame.
+- **Faster door checks**: MTR searched every block around every doorway of every stopped train each frame; ATU remembers the result until a block changes (and checks itself against MTR's search as it goes).
 - **Free unused models**: models MTR drops give back their memory and GPU buffers.
-- F3 shows ATU's counters (MTR draw calls, render time, model builds).
+- Always on (same result as MTR): MTR's shadow-pass check no longer walks the thread stack several times per frame.
+- F3 shows ATU's counters (MTR draw calls, render time, all of MTR's frame time, door checks, model builds).
 
 Measured numbers: `docs/SESSION_LOG.md` and `tools/perfbench/`.
 

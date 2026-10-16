@@ -2,7 +2,12 @@ package com.aureliatransit.utilities.mixin.mtr;
 
 import com.aureliatransit.utilities.perf.AsyncModels;
 import com.aureliatransit.utilities.perf.FastObjLoader;
+import com.aureliatransit.utilities.perf.Perf;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.MinecraftClient;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import org.mtr.mapping.holder.Identifier;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.mod.generated.resource.VehicleModelSchema;
 import org.mtr.mod.render.DynamicVehicleModel;
@@ -34,6 +39,10 @@ public abstract class VehicleModelMixin extends VehicleModelSchema implements As
 
 	@Unique
 	private AsyncModels.Job atu$job;
+	@Unique
+	private long atu$createStart;
+	@Unique
+	private long atu$createMergeStart;
 
 	private VehicleModelMixin(ReaderBase readerBase, ResourceProvider resourceProvider) {
 		super(readerBase, resourceProvider);
@@ -41,6 +50,8 @@ public abstract class VehicleModelMixin extends VehicleModelSchema implements As
 
 	@Inject(method = "createModel", at = @At("HEAD"), cancellable = true)
 	private void atu$loadInBackground(ModelProperties modelProperties, PositionDefinitions positionDefinitions, String id, CallbackInfoReturnable<DynamicVehicleModel> cir) {
+		atu$createStart = System.nanoTime();
+		atu$createMergeStart = Perf.STATS.buildMergeNanos();
 		if (atu$job != null && atu$job.isDone()) {
 			final AsyncModels.Job job = atu$job;
 			atu$job = null;
@@ -65,6 +76,17 @@ public abstract class VehicleModelMixin extends VehicleModelSchema implements As
 	@Inject(method = "createModel", at = @At("RETURN"))
 	private void atu$endBuild(ModelProperties modelProperties, PositionDefinitions positionDefinitions, String id, CallbackInfoReturnable<DynamicVehicleModel> cir) {
 		AsyncModels.clearOffer();
+		Perf.STATS.buildCreate(System.nanoTime() - atu$createStart, Perf.STATS.buildMergeNanos() - atu$createMergeStart);
+	}
+
+	@WrapOperation(method = "createModel", at = @At(value = "INVOKE", target = "Lorg/mtr/mod/resource/ModelResourceLoader;loadModel(Ljava/lang/String;Lorg/mtr/mapping/holder/Identifier;ZLorg/mtr/mod/resource/ResourceProvider;)Lorg/mtr/libraries/it/unimi/dsi/fastutil/objects/Object2ObjectAVLTreeMap;"))
+	private Object2ObjectAVLTreeMap<?, ?> atu$timeLoad(String modelResource, Identifier identifier, boolean flag, ResourceProvider provider, Operation<Object2ObjectAVLTreeMap<?, ?>> original) {
+		final long start = System.nanoTime();
+		try {
+			return original.call(modelResource, identifier, flag, provider);
+		} finally {
+			Perf.STATS.buildCreateLoad(System.nanoTime() - start);
+		}
 	}
 
 	/** Prefetch from the car's model list: only models MTR has not built yet. */

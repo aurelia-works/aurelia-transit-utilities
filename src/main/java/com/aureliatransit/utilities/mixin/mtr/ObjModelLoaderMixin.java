@@ -33,8 +33,10 @@ public abstract class ObjModelLoaderMixin {
 		// Parsed in the background for this model build (AsyncModels): only materials and checks are left.
 		final FastObjLoader.Prepared prepared = RenderSystem.isOnRenderThread() ? AsyncModels.take(objString, splitModel) : null;
 		if (prepared != null) {
+			final long start = System.nanoTime();
 			try {
 				cir.setReturnValue(FastObjLoader.assemble(prepared, mtlResolver, textureResolver, atlasManager));
+				Perf.STATS.buildAssemble(System.nanoTime() - start);
 				return;
 			} catch (RuntimeException e) {
 				atu$failed = true;
@@ -55,6 +57,9 @@ public abstract class ObjModelLoaderMixin {
 			Perf.LOGGER.error("Fast OBJ reading failed; using MTR's own OBJ reader for the rest of this session", e);
 		} finally {
 			Perf.STATS.parse(System.nanoTime() - start);
+			if (RenderSystem.isOnRenderThread()) {
+				Perf.STATS.buildParse(System.nanoTime() - start);
+			}
 		}
 	}
 }
